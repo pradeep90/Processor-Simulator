@@ -239,7 +239,9 @@ class Processor (object):
             if self.executor_buffer ['condition_output']:
                 self.PC = self.executor_buffer ['jump_addr']
 
-        return self.executor_buffer
+        temp = self.executor_buffer
+        self.executor_buffer = {}
+        return temp
 
     def writeBackRegisters (self):
         if not self.memory_buffer.has_key ('instr') : return {}
@@ -250,6 +252,8 @@ class Processor (object):
             self.register_file.setClean (instr.rd)
         elif instr.type == 'I':
             self.register_file.setClean (instr.rt)
+
+        self.memory_buffer = {}
 
     def printBuffers (self):
         for buf in ['fetcher_buffer',
@@ -262,8 +266,7 @@ class Processor (object):
     def start (self):
         self.instruction_addres = self.start_address
         self.more_instructions_to_fetch = True
-        # while (self.more_instructions_to_fetch):
-        for i in range (10):
+        while (self.more_instructions_to_fetch):
             self.printBuffers ()
             print self.register_file
             foo = (
@@ -273,7 +276,6 @@ class Processor (object):
                 self.decodeInstruction () or self.reg_fetcher_buffer,
                 self.fetchInstruction () or self.fetcher_buffer,
             )
-            print foo
             (
                 blah,
                 self.memory_buffer,
@@ -281,6 +283,12 @@ class Processor (object):
                 self.reg_fetcher_buffer,
                 self.fetcher_buffer,
             ) = foo
+            self.more_instructions_to_fetch = (
+                self.memory_buffer or
+                self.executor_buffer or
+                self.reg_fetcher_buffer or
+                self.fetcher_buffer
+            )
 
 if __name__ == "__main__":
     memory = Memory ()
