@@ -47,7 +47,6 @@ class Processor (object):
         try :
             self.IR = self.memory [self.PC]
             self.NPC = self.PC + 4
-            print Instruction (self.IR)
             return {'instr' : Instruction (self.IR)}
         except IndexError :
             return {}
@@ -63,6 +62,7 @@ class Processor (object):
         if instr.type == 'R':
             if (self.register_file.isClean (instr.rs) and
                 self.register_file.isClean (instr.rt)) :
+                self.fetcher_buffer = {}
                 return {
                     'instr' : instr,
                     'rs' : [instr.rs, self.register_file [instr.rs]],
@@ -76,6 +76,7 @@ class Processor (object):
         elif (instr.type == 'I' and (len (instr.opcode) == 4 or
                                      instr.opcode [0] == 'L')):
             if self.register_file.isClean (instr.rs) :
+                self.fetcher_buffer = {}
                 return {
                     'instr' : instr,
                     'rs' : [instr.rs, self.register_file [instr.rs]],
@@ -89,6 +90,7 @@ class Processor (object):
         elif (instr.type == 'I' and instr.opcode [0] in 'SB'):
             if (self.register_file.isClean (instr.rs) and
                 self.register_file.isClean (instr.rt)):
+                self.fetcher_buffer = {}
                 return {
                     'instr' : instr,
                     'rs' : [instr.rs, self.register_file [instr.rs]],
@@ -105,6 +107,7 @@ class Processor (object):
             pc_msb = bin (self.PC) [2:].zfill (32) [:4]
             imm = bin (instr.immediate * 4) [2:].zfill (28)
             jump_addr = int (pc_msb + imm, 2)
+            self.fetcher_buffer = {}
             return {
                 'instr' : instr,
                 'jump_addr' : jump_address
@@ -127,6 +130,7 @@ class Processor (object):
                     self.reg_fetcher_buffer ['rs'] [1],
                     self.reg_fetcher_buffer ['rt'] [1]
                 )
+                self.reg_fetcher_buffer = {}
                 return {'instr' : instr,
                         'rd' : [instr.rd,
                                 self.register_file [instr.rd]]}
@@ -145,6 +149,7 @@ class Processor (object):
                         self.reg_fetcher_buffer ['rs'] [1],
                         self.reg_fetcher_buffer ['immediate']
                     )
+                    self.reg_fetcher_buffer = {}
                     return {'instr' : instr,
                             'rt' : [instr.rt,
                                     self.register_file [instr.rt]]}
@@ -155,6 +160,7 @@ class Processor (object):
                     memaddr = (self.reg_fetcher_buffer ['rs'] [1]
                                +
                                self.reg_fetcher_buffer ['immediate'])
+                    self.reg_fetcher_buffer = {}
                     return {'instr' : instr,
                             'rt' : instr.rt,
                             'memaddr' : memaddr}
@@ -165,6 +171,7 @@ class Processor (object):
                     memaddr = (self.reg_fetcher_buffer ['rs'] [1]
                                +
                                self.reg_fetcher_buffer ['immediate'])
+                    self.reg_fetcher_buffer = {}
                     return {'instr' : instr,
                             'memaddr' : memaddr,
                             'rt' : [instr.rt,
@@ -190,12 +197,13 @@ class Processor (object):
                         ==
                         self.reg_fetcher_buffer ['rt'] [1]
                     )
+                self.reg_fetcher_buffer = {}
                 return {
                     'instr' : instr,
                     'condition_output' : condition_output,
                     'jump_addr': (
                         self.NPC +
-                        4 * self.reg_fetcher_buffer ['immediate']
+                        4 * instr.immediate
                      )
                 }
             else: return {}
@@ -214,6 +222,7 @@ class Processor (object):
             instr.opcode [0] in 'L') :
             mem_val = self.data_memory [self.executor_buffer ['memaddr']]
             self.register_file [instr.rt] = mem_val
+            self.executor_buffer = {}
             return {'instr' : instr,
                     'rt' : [instr.rt, mem_val]}
 
@@ -223,6 +232,7 @@ class Processor (object):
             self.data_memory [self.executor_buffer ['memaddr']] = (
                 self.executor_buffer ['rt'] [1]
             )
+            self.executor_buffer = {}
             return {'instr' : instr}
 
         elif instr.opcode in 'BNE BEQ':
@@ -240,13 +250,22 @@ class Processor (object):
             self.register_file.setClean (instr.rd)
         elif instr.type == 'I':
             self.register_file.setClean (instr.rt)
-                
+
+    def printBuffers (self):
+        for buf in ['fetcher_buffer',
+                    'reg_fetcher_buffer',
+                    'executor_buffer',
+                    'memory_buffer'] :
+            print buf
+            print self.__getattribute__ (buf)
+
     def start (self):
         self.instruction_addres = self.start_address
         self.more_instructions_to_fetch = True
         # while (self.more_instructions_to_fetch):
         for i in range (10):
             print self.register_file
+            self.printBuffers ()
             foo = (self.fetchInstruction () or self.fetcher_buffer,
                    self.decodeInstruction () or self.reg_fetcher_buffer,
                    self.execute () or self.executor_buffer,

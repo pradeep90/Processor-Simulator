@@ -119,6 +119,9 @@ class Instruction (object):
             return " ".join ([self.opcode,
                               str (self.offset_from_pc)])
 
+    def __repr__ (self):
+        return self.__str__ ()
+
 if __name__ == "__main__" :
     memory = Memory ()
     memory.loadProgram ('./Input_hex_fibonacci.txt')
