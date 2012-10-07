@@ -264,18 +264,23 @@ class Processor (object):
         self.more_instructions_to_fetch = True
         # while (self.more_instructions_to_fetch):
         for i in range (10):
-            print self.register_file
             self.printBuffers ()
-            foo = (self.fetchInstruction () or self.fetcher_buffer,
-                   self.decodeInstruction () or self.reg_fetcher_buffer,
-                   self.execute () or self.executor_buffer,
-                   self.doMemoryOperations () or self.memory_buffer,
-                   self.writeBackRegisters ())
-            (self.fetcher_buffer,
-             self.reg_fetcher_buffer,
-             self.executor_buffer,
-             self.memory_buffer,
-             blah) = foo
+            print self.register_file
+            foo = (
+                self.writeBackRegisters (),
+                self.doMemoryOperations () or self.memory_buffer,
+                self.execute () or self.executor_buffer,
+                self.decodeInstruction () or self.reg_fetcher_buffer,
+                self.fetchInstruction () or self.fetcher_buffer,
+            )
+            print foo
+            (
+                blah,
+                self.memory_buffer,
+                self.executor_buffer,
+                self.reg_fetcher_buffer,
+                self.fetcher_buffer,
+            ) = foo
 
 if __name__ == "__main__":
     memory = Memory ()
