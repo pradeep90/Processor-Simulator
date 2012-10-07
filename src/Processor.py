@@ -44,15 +44,26 @@ class Processor (object):
         return eval (expr)
 
     def fetchInstruction (self):
+        """Based on PC value, fetch instruction from memory. Update PC.
+        Return the value of the fetcher_buffer for the next cycle.
+        """
         try :
             self.IR = self.memory [self.PC]
             self.NPC = self.PC + 4
+            print 'self.NPC changed to', self.NPC
+
             return {'instr' : Instruction (self.IR),
                     'npc' : self.NPC}
         except IndexError :
+            print 'IndexError in fetchInstruction'
             return {}
 
     def decodeInstruction (self):
+        """Decode the instr in fetcher_buffer and read from registers.
+
+        Check for possible branch. Compute branch target address, if
+        needed.
+        """
         if not self.fetcher_buffer.has_key ('instr') : return {}
         instr = self.fetcher_buffer ['instr']
         npc = self.fetcher_buffer ['npc']
@@ -109,7 +120,10 @@ class Processor (object):
             # mul offset_from_pc by 4
             # concatenate
             # That's where we should jump
+
+            # TODO: Check this
             pc_msb = bin (npc - 4) [2:].zfill (32) [:4]
+            # pc_msb = bin (self.PC) [2:].zfill (32) [:4]
             imm = bin (instr.offset_from_pc * 4) [2:].zfill (28)
             jump_addr = int (pc_msb + imm, 2)
             self.fetcher_buffer = {}
@@ -120,6 +134,8 @@ class Processor (object):
             }
 
     def execute (self):
+        """
+        """
         if not self.reg_fetcher_buffer.has_key ('instr') : return {}
         instr = self.reg_fetcher_buffer ['instr']
         npc = self.reg_fetcher_buffer ['npc']
@@ -221,13 +237,24 @@ class Processor (object):
             else: return {}
 
     def doMemoryOperations (self):
-        if not self.executor_buffer.has_key ('instr') : return {}
+        # TODO: This is where the old code did the right thing. It set
+        # PC to NPC before this line and in the cases where 'instr'
+        # was not in executor_buffer, the new code would simply return
+        # {} and cup.
+        if not self.executor_buffer.has_key ('instr') : 
+            print 'Should PC have been changed here??'
+            return {}
         instr = self.executor_buffer['instr']
         npc = self.executor_buffer ['npc']
+
+        # I suppose PC is changed here because by now Branch
+        # instructions would have been over
         self.PC = npc
+        print 'PC changed to', self.PC
 
         if instr.type == 'J':
             self.PC = self.executor_buffer ['jump_addr']
+            print 'J: PC changed to', self.PC
             return {}
 
         # Load  : rt <- mem [imm (rs)]
@@ -253,6 +280,7 @@ class Processor (object):
         elif instr.opcode in 'BNE BEQ':
             if self.executor_buffer ['condition_output']:
                 self.PC = self.executor_buffer ['jump_addr']
+                print 'BNE/BEQ: PC changed to', self.PC
 
         temp = self.executor_buffer
         self.executor_buffer = {}
@@ -282,9 +310,15 @@ class Processor (object):
     def start (self):
         self.instruction_addres = self.start_address
         self.more_instructions_to_fetch = True
+        self.cycle_num = 0
         while (self.more_instructions_to_fetch):
+            self.cycle_num += 1
+            print 'Beginning of Cycle #' + str(self.cycle_num)
+            print '=' * 12
+
             self.printBuffers ()
-            print self.register_file
+            print
+            # print self.register_file
             foo = (
                 self.writeBackRegisters (),
                 self.doMemoryOperations () or self.memory_buffer,
