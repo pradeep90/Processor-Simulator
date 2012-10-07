@@ -1,2 +1,1 @@
 I ADDI R1 R1 3
-I ADDI R3 R3 9

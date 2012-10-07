@@ -47,13 +47,15 @@ class Processor (object):
         try :
             self.IR = self.memory [self.PC]
             self.NPC = self.PC + 4
-            return {'instr' : Instruction (self.IR)}
+            return {'instr' : Instruction (self.IR),
+                    'npc' : self.NPC}
         except IndexError :
             return {}
 
     def decodeInstruction (self):
         if not self.fetcher_buffer.has_key ('instr') : return {}
         instr = self.fetcher_buffer ['instr']
+        npc = self.fetcher_buffer ['npc']
 
         # R type : rd <- rs funct rt
         # If applicable, mark the output register in the registerfile
@@ -66,7 +68,8 @@ class Processor (object):
                 return {
                     'instr' : instr,
                     'rs' : [instr.rs, self.register_file [instr.rs]],
-                    'rt' : [instr.rt, self.register_file [instr.rt]]
+                    'rt' : [instr.rt, self.register_file [instr.rt]],
+                    'npc' : npc,
                 }
             self.register_file.setDirty (instr.rd)
             return {}
@@ -80,6 +83,7 @@ class Processor (object):
                 return {
                     'instr' : instr,
                     'rs' : [instr.rs, self.register_file [instr.rs]],
+                    'npc' : npc,
                     'immediate' : instr.immediate
                 }
             self.register_file.setDirty (instr.rt)
@@ -95,27 +99,30 @@ class Processor (object):
                     'instr' : instr,
                     'rs' : [instr.rs, self.register_file [instr.rs]],
                     'rt' : [instr.rt, self.register_file [instr.rt]],
+                    'npc' : npc,
                     'immediate' : instr.immediate
                 }
             return {}
 
         elif instr.type == 'J':
             # take 4 msb of PC
-            # mul imm by 4
+            # mul offset_from_pc by 4
             # concatenate
             # That's where we should jump
-            pc_msb = bin (self.PC) [2:].zfill (32) [:4]
-            imm = bin (instr.immediate * 4) [2:].zfill (28)
+            pc_msb = bin (npc - 4) [2:].zfill (32) [:4]
+            imm = bin (instr.offset_from_pc * 4) [2:].zfill (28)
             jump_addr = int (pc_msb + imm, 2)
             self.fetcher_buffer = {}
             return {
                 'instr' : instr,
-                'jump_addr' : jump_address
+                'npc' : npc,
+                'jump_addr' : jump_addr
             }
 
     def execute (self):
         if not self.reg_fetcher_buffer.has_key ('instr') : return {}
         instr = self.reg_fetcher_buffer ['instr']
+        npc = self.reg_fetcher_buffer ['npc']
 
         if instr.type == 'J':
             return self.reg_fetcher_buffer
@@ -132,6 +139,7 @@ class Processor (object):
                 )
                 self.reg_fetcher_buffer = {}
                 return {'instr' : instr,
+                        'npc' : npc,
                         'rd' : [instr.rd,
                                 self.register_file [instr.rd]]}
             # Here, we should take care of orperand fowarding
@@ -151,6 +159,7 @@ class Processor (object):
                     )
                     self.reg_fetcher_buffer = {}
                     return {'instr' : instr,
+                            'npc' : npc,
                             'rt' : [instr.rt,
                                     self.register_file [instr.rt]]}
 
@@ -162,6 +171,7 @@ class Processor (object):
                                self.reg_fetcher_buffer ['immediate'])
                     self.reg_fetcher_buffer = {}
                     return {'instr' : instr,
+                            'npc' : npc,
                             'rt' : instr.rt,
                             'memaddr' : memaddr}
 
@@ -173,6 +183,7 @@ class Processor (object):
                                self.reg_fetcher_buffer ['immediate'])
                     self.reg_fetcher_buffer = {}
                     return {'instr' : instr,
+                            'npc' : npc,
                             'memaddr' : memaddr,
                             'rt' : [instr.rt,
                                     self.register_file [instr.rt]]}
@@ -200,18 +211,20 @@ class Processor (object):
                 self.reg_fetcher_buffer = {}
                 return {
                     'instr' : instr,
+                    'npc' : npc,
                     'condition_output' : condition_output,
                     'jump_addr': (
-                        self.NPC +
+                        npc +
                         4 * instr.immediate
                      )
                 }
             else: return {}
 
     def doMemoryOperations (self):
-        self.PC = self.NPC
         if not self.executor_buffer.has_key ('instr') : return {}
         instr = self.executor_buffer['instr']
+        npc = self.executor_buffer ['npc']
+        self.PC = npc
 
         if instr.type == 'J':
             self.PC = self.executor_buffer ['jump_addr']
@@ -224,6 +237,7 @@ class Processor (object):
             self.register_file [instr.rt] = mem_val
             self.executor_buffer = {}
             return {'instr' : instr,
+                    'npc': npc,
                     'rt' : [instr.rt, mem_val]}
 
         # Store : mem [imm (rs)] <- rt
@@ -233,7 +247,8 @@ class Processor (object):
                 self.executor_buffer ['rt'] [1]
             )
             self.executor_buffer = {}
-            return {'instr' : instr}
+            return {'instr' : instr,
+                    'npc': npc,}
 
         elif instr.opcode in 'BNE BEQ':
             if self.executor_buffer ['condition_output']:
@@ -256,6 +271,7 @@ class Processor (object):
         self.memory_buffer = {}
 
     def printBuffers (self):
+        print "PC :", self.PC
         for buf in ['fetcher_buffer',
                     'reg_fetcher_buffer',
                     'executor_buffer',
