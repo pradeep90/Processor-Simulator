@@ -44,9 +44,13 @@ class Processor (object):
         return eval (expr)
 
     def fetchInstruction (self):
-        self.IR = self.memory [self.PC]
-        self.NPC = self.PC + 4
-        return {'instr' : Instruction (self.IR)}
+        try :
+            self.IR = self.memory [self.PC]
+            self.NPC = self.PC + 4
+            print Instruction (self.IR)
+            return {'instr' : Instruction (self.IR)}
+        except IndexError :
+            return {}
 
     def decodeInstruction (self):
         if not self.fetcher_buffer.has_key ('instr') : return {}
