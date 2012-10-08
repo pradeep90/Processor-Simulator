@@ -58,12 +58,12 @@ class Processor (object):
         if self.decoder_stalled :
             return {}
         try :
-            self.instr_count += 1
             self.IR = self.memory [self.PC]
             self.NPC = self.PC + 4
             self.PC = self.NPC
             print 'self.NPC changed to', self.NPC
 
+            self.instr_count += 1
             return {'instr' : Instruction (self.IR),
                     'npc' : self.NPC}
         except IndexError :
