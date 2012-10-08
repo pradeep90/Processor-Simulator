@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from collections import defaultdict
+import sys
 
 from Instruction import Instruction
 from Memory import Memory
@@ -27,7 +28,7 @@ class Processor (object):
         self.IR = ""
         self.NPC = 0
         self.cycle_count = 0
-        self.instr_count = len (memory)
+        self.instr_count= 0
 
     def do_operation (self, opcode, oper1, oper2):
         oper_dict = {
@@ -57,6 +58,7 @@ class Processor (object):
         if self.decoder_stalled :
             return {}
         try :
+            self.instr_count += 1
             self.IR = self.memory [self.PC]
             self.NPC = self.PC + 4
             self.PC = self.NPC
@@ -347,8 +349,10 @@ class Processor (object):
 
 if __name__ == "__main__":
     memory = Memory ()
-    # memory.loadProgram ('./Input_hex_fibonacci.txt')
-    memory.loadProgramDebug ('./adder.txt')
+    filename = './fibo.txt'
+    if len (sys.argv) > 1 :
+        filename = sys.argv [1]
+    memory.loadProgramDebug (filename)
     processor = Processor (memory, 0)
     processor.start ()
     print processor.getCPI ()
