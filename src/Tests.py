@@ -57,6 +57,35 @@ class ProcessorTest (unittest.TestCase):
         self.assertEqual (cpi, 5)
         self.assertEqual (r1_content, 8)
 
+    def test_dependant_instrs_dummy (self):
+        prog = """I ADDI R1 R1 1
+R ADD  R1 R1 R2
+"""
+        memory = Memory ()
+        memory.loadProgramDebugFromText (prog)
+        processor = Processor (memory, 0)
+        disablePrint ()
+        processor.start ()
+        enablePrint ()
+        cpi = processor.getCPI ()
+        # CPI should be 4 because there stall of length 2
+        # For the second instruction.
+        self.assertEqual (cpi, 4)
+
+    def test_independant_instrs_dummy (self):
+        prog = """I ADDI R1 R1 1
+R ADD  R3 R3 R2
+"""
+        memory = Memory ()
+        memory.loadProgramDebugFromText (prog)
+        processor = Processor (memory, 0)
+        disablePrint ()
+        processor.start ()
+        enablePrint ()
+        cpi = processor.getCPI ()
+        # CPI should be 3 as there is no stall
+        # For the second instruction.
+        self.assertEqual (cpi, 3)
 
 if __name__ == "__main__":
     unittest.main ()

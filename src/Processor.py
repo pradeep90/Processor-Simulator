@@ -12,6 +12,11 @@ class Processor (object):
     executor_buffer = {}
     memory_buffer = {}
 
+    decoder_stalled = False
+    executor_stalled = False
+    mem_stalled = False
+    reg_writer_stalled = False
+
 
     def __init__ (self, memory, start_address):
         self.memory= memory
@@ -49,6 +54,8 @@ class Processor (object):
         """Based on PC value, fetch instruction from memory. Update PC.
         Return the value of the fetcher_buffer for the next cycle.
         """
+        if self.decoder_stalled :
+            return {}
         try :
             self.IR = self.memory [self.PC]
             self.NPC = self.PC + 4
@@ -69,6 +76,7 @@ class Processor (object):
 
         Also, update the PC to the computed branch target.
         """
+        if self.executor_stalled : return {}
         if not self.fetcher_buffer.has_key ('instr') : return {}
         instr = self.fetcher_buffer ['instr']
         npc = self.fetcher_buffer ['npc']
@@ -77,6 +85,7 @@ class Processor (object):
         # If applicable, mark the output register in the registerfile
         # as dirty. And if the input registers are not dirty, then put
         # them in the buffer.
+        self.decoder_stalled = False
         if instr.type == 'R':
             if (self.register_file.isClean (instr.rs) and
                 self.register_file.isClean (instr.rt)) :
@@ -88,8 +97,10 @@ class Processor (object):
                     'rt' : [instr.rt, self.register_file [instr.rt]],
                     'npc' : npc,
                 }
-            self.register_file.setDirty (instr.rd)
-            return {}
+            else :
+                self.decoder_stalled = True
+                self.register_file.setDirty (instr.rd)
+                return {}
 
         # I type : rt <- rs funct imm
         # I type load : rt <- mem [imm (rs)]
@@ -104,8 +115,10 @@ class Processor (object):
                     'npc' : npc,
                     'immediate' : instr.immediate
                 }
-            self.register_file.setDirty (instr.rt)
-            return {}
+            else :
+                self.decoder_stalled = True
+                self.register_file.setDirty (instr.rt)
+                return {}
 
         # I type store: mem [imm (rs)] <- rt
         # I type branch: jump to imm depending on comparison of rs and rt
@@ -120,7 +133,9 @@ class Processor (object):
                     'npc' : npc,
                     'immediate' : instr.immediate
                 }
-            return {}
+            else :
+                self.decoder_stalled = True
+                return {}
 
         elif instr.type == 'J':
             # take 4 msb of PC
@@ -140,10 +155,12 @@ class Processor (object):
     def execute (self):
         """
         """
+        if self.mem_stalled : return {}
         if not self.reg_fetcher_buffer.has_key ('instr') : return {}
         instr = self.reg_fetcher_buffer ['instr']
         npc = self.reg_fetcher_buffer ['npc']
 
+        self.executor_stalled = False
         if instr.type == 'J':
             return self.reg_fetcher_buffer
 
@@ -163,7 +180,9 @@ class Processor (object):
                         'rd' : [instr.rd,
                                 self.register_file [instr.rd]]}
             # Here, we should take care of orperand fowarding
-            else: return {}
+            else:
+                self.executor_stalled = True
+                return {}
 
         if instr.type == 'I':
             # Check if operands are in the buffer, if not, we need to
@@ -208,7 +227,9 @@ class Processor (object):
                             'rt' : [instr.rt,
                                     self.register_file [instr.rt]]}
 
-            else: return {}
+            else:
+                self.executor_stalled = True
+                return {}
             # BEQ and BNE
             if (self.reg_fetcher_buffer.has_key ('rs') and
                 self.reg_fetcher_buffer.has_key ('immediate') and
@@ -240,6 +261,7 @@ class Processor (object):
         # PC to NPC before this line and in the cases where 'instr'
         # was not in executor_buffer, the new code would simply return
         # {} and cup.
+        if self.reg_writer_stalled : return {}
         if not self.executor_buffer.has_key ('instr') : 
             print 'Should PC have been changed here??'
             return {}
