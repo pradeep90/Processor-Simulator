@@ -81,6 +81,7 @@ class Processor (object):
             if (self.register_file.isClean (instr.rs) and
                 self.register_file.isClean (instr.rt)) :
                 self.fetcher_buffer = {}
+                self.register_file.setDirty (instr.rd)
                 return {
                     'instr' : instr,
                     'rs' : [instr.rs, self.register_file [instr.rs]],
@@ -96,6 +97,7 @@ class Processor (object):
                                      instr.opcode [0] == 'L')):
             if self.register_file.isClean (instr.rs) :
                 self.fetcher_buffer = {}
+                self.register_file.setDirty (instr.rt)
                 return {
                     'instr' : instr,
                     'rs' : [instr.rs, self.register_file [instr.rs]],

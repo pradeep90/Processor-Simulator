@@ -13,8 +13,9 @@ class RegisterFile (object):
         return self.regs [register_number] [0]
 
     def __setitem__ (self, register_number, value):
+        old_val, old_status = self.regs [register_number]
         return self.regs.__setitem__ (register_number,
-                                      [value, False])
+                                      [value, old_status])
 
     def isDirty (self, reg_number):
         return self.regs [reg_number] [1]
