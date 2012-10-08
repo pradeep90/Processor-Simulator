@@ -21,6 +21,8 @@ class Processor (object):
         self.PC = 0
         self.IR = ""
         self.NPC = 0
+        self.cycle_count = 0
+        self.instr_count = len (memory)
 
     def do_operation (self, opcode, oper1, oper2):
         oper_dict = {
@@ -50,6 +52,7 @@ class Processor (object):
         try :
             self.IR = self.memory [self.PC]
             self.NPC = self.PC + 4
+            self.PC = self.NPC
             print 'self.NPC changed to', self.NPC
 
             return {'instr' : Instruction (self.IR),
@@ -63,6 +66,8 @@ class Processor (object):
 
         Check for possible branch. Compute branch target address, if
         needed.
+
+        Also, update the PC to the computed branch target.
         """
         if not self.fetcher_buffer.has_key ('instr') : return {}
         instr = self.fetcher_buffer ['instr']
@@ -127,11 +132,8 @@ class Processor (object):
             imm = bin (instr.offset_from_pc * 4) [2:].zfill (28)
             jump_addr = int (pc_msb + imm, 2)
             self.fetcher_buffer = {}
-            return {
-                'instr' : instr,
-                'npc' : npc,
-                'jump_addr' : jump_addr
-            }
+            self.PC = jump_addr
+            return {}
 
     def execute (self):
         """
@@ -225,15 +227,10 @@ class Processor (object):
                         self.reg_fetcher_buffer ['rt'] [1]
                     )
                 self.reg_fetcher_buffer = {}
-                return {
-                    'instr' : instr,
-                    'npc' : npc,
-                    'condition_output' : condition_output,
-                    'jump_addr': (
-                        npc +
-                        4 * instr.immediate
-                     )
-                }
+                if condition_output:
+                    self.PC = npc + 4 * instr.immediate
+                    print 'BNE/BEQ: PC changed to', self.PC
+                return {}
             else: return {}
 
     def doMemoryOperations (self):
@@ -245,17 +242,6 @@ class Processor (object):
             print 'Should PC have been changed here??'
             return {}
         instr = self.executor_buffer['instr']
-        npc = self.executor_buffer ['npc']
-
-        # I suppose PC is changed here because by now Branch
-        # instructions would have been over
-        self.PC = npc
-        print 'PC changed to', self.PC
-
-        if instr.type == 'J':
-            self.PC = self.executor_buffer ['jump_addr']
-            print 'J: PC changed to', self.PC
-            return {}
 
         # Load  : rt <- mem [imm (rs)]
         if (len (instr.opcode) == 2 and
@@ -264,7 +250,6 @@ class Processor (object):
             self.register_file [instr.rt] = mem_val
             self.executor_buffer = {}
             return {'instr' : instr,
-                    'npc': npc,
                     'rt' : [instr.rt, mem_val]}
 
         # Store : mem [imm (rs)] <- rt
@@ -274,13 +259,7 @@ class Processor (object):
                 self.executor_buffer ['rt'] [1]
             )
             self.executor_buffer = {}
-            return {'instr' : instr,
-                    'npc': npc,}
-
-        elif instr.opcode in 'BNE BEQ':
-            if self.executor_buffer ['condition_output']:
-                self.PC = self.executor_buffer ['jump_addr']
-                print 'BNE/BEQ: PC changed to', self.PC
+            return {'instr' : instr}
 
         temp = self.executor_buffer
         self.executor_buffer = {}
@@ -310,15 +289,14 @@ class Processor (object):
     def start (self):
         self.instruction_addres = self.start_address
         self.more_instructions_to_fetch = True
-        self.cycle_num = 0
         while (self.more_instructions_to_fetch):
-            self.cycle_num += 1
-            print 'Beginning of Cycle #' + str(self.cycle_num)
+            self.cycle_count += 1
+            print 'Beginning of Cycle #' + str(self.cycle_count)
             print '=' * 12
 
             self.printBuffers ()
-            print
-            # print self.register_file
+            # print
+            print self.register_file
             foo = (
                 self.writeBackRegisters (),
                 self.doMemoryOperations () or self.memory_buffer,
@@ -340,9 +318,13 @@ class Processor (object):
                 self.fetcher_buffer
             )
 
+    def getCPI (self):
+        return (1.0 * self.cycle_count) / self.instr_count
+
 if __name__ == "__main__":
     memory = Memory ()
     # memory.loadProgram ('./Input_hex_fibonacci.txt')
     memory.loadProgramDebug ('./adder.txt')
     processor = Processor (memory, 0)
     processor.start ()
+    print processor.getCPI ()

@@ -20,6 +20,9 @@ class Memory (object):
     def __next__ (self):
         return self.list.__next__ ()
 
+    def __len__ (self):
+        return self.list.__len__ ()
+
     def loadProgram (self, program_filename):
         '''Reads a file containing the MIPS code (in hex)
         and loads it into the memory, which can be accessed later. '''
@@ -32,11 +35,15 @@ class Memory (object):
 
     def loadProgramDebug (self, program_filename):
         program_file = open (program_filename)
-        lines = program_file.readlines ()
+        text = program_file.read ()
+        program_file.close ()
+        self.loadProgramDebugFromText (text)
+
+    def loadProgramDebugFromText (self, text):
+        lines = text.split ('\n')
         self.list = [line.strip ().split ()
                      for line in lines
                      if line.strip ()]
-        program_file.close ()
         
 
     def __str__ (self):
