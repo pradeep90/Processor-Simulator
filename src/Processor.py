@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 import sys
-
+from warnings import warn
 from Instruction import Instruction
 from Memory import Memory
 from RegisterFile import RegisterFile
@@ -31,6 +31,8 @@ class Processor (object):
         self.instr_count= 0
 
     def do_operation (self, opcode, oper1, oper2):
+        """Return value of arithmetic expression `oper1 opcode oper2`.
+        """
         oper_dict = {
             'ADD'  : ' +',
             'ADDI' : ' +',
@@ -51,23 +53,36 @@ class Processor (object):
                 + ')')
         return eval (expr)
 
-    def fetchInstruction (self):
-        """Based on PC value, fetch instruction from memory. Update PC.
+    def fetchInstruction (self, fetch_input_buffer = None):
+        """Based on PC value, fetch instruction from memory.
+
+        Update PC.
         Return the value of the fetcher_buffer for the next cycle.
+        fetch_input_buffer: contains
+        + PC
+        + memory
+        + is_branch_reg_zero
+        + branch_target_pc
+        + is_decoder_stalled
         """
-        if self.decoder_stalled :
+        if fetch_input_buffer.get('is_decoder_stalled', False):
             return {}
         try :
-            self.IR = self.memory [self.PC]
-            self.NPC = self.PC + 4
-            self.PC = self.NPC
-            print 'self.NPC changed to', self.NPC
+            memory = fetch_input_buffer['memory']
+            PC = fetch_input_buffer['PC']
+
+            IR = self.memory [PC]
+
+            # Is the NPC even needed anymore?
+            # PC = NPC
+            NPC = PC + 4
+            print 'NPC changed to', NPC
 
             self.instr_count += 1
-            return {'instr' : Instruction (self.IR),
-                    'npc' : self.NPC}
+            return {'instr' : Instruction (IR),
+                    'npc' : NPC}
         except IndexError :
-            print 'IndexError in fetchInstruction'
+            # warn('IndexError in fetchInstruction')
             return {}
 
     def decodeInstruction (self):

@@ -101,6 +101,7 @@ class Instruction (object):
                     self.rd = int (i_bin [16:21], 2)
                 except :
                     print "Error in parsing instruction"
+                    raise Exception('Bad instruction format - has to be 32 bits long.')
 
         return self
 
@@ -121,6 +122,27 @@ class Instruction (object):
 
     def __repr__ (self):
         return self.__str__ ()
+
+    def __eq__(self, other):
+        """Return True iff self and other have the same attributes.
+        
+        Arguments:
+        - `other`:
+        """
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
+    def __ne__(self, other):
+        """Return False iff self and other have the same attributes.
+        
+        Arguments:
+        - `other`:
+        """
+        return not self.__eq__(other)
+
+
 
 if __name__ == "__main__" :
     memory = Memory ()

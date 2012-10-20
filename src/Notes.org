@@ -1,0 +1,12 @@
+# -*- org-pretty-entities-include-sub-superscripts: nil; -*-
+				Notes
+
+* Processor
+** Adding unit tests - getting the program to correspond to diagram on slide 7, [[/home/pradeep/Acads/CSD/Quiz-2-Slides/Lect-20.pdf][Lect 20]] - Dealing with Branches in the Pipeline
+*** do_operation
+*** DONE fetchInstruction
+    CLOCK: [2012-10-20 Sat 19:35]--[2012-10-20 Sat 20:29] =>  0:54
+* Memory
+** DONE Refactoring - docstrings + unit tests
+   CLOCK: [2012-10-20 Sat 19:09]--[2012-10-20 Sat 19:33] =>  0:24
+** Instruction memory, methinks
