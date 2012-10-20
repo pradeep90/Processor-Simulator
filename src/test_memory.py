@@ -24,7 +24,6 @@ class MemoryTest(unittest.TestCase):
             Memory.Memory.get_bin_from_hex_instruction(instruction) 
             for instruction in hex_instruction_list]
         self.memory = Memory.Memory(bin_instruction_list)
-        self.memory = Memory.Memory()
 
     def tearDown(self):
         pass

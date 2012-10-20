@@ -41,6 +41,18 @@ class RegisterFile (object):
             str_repr += '\n'
         return str_repr
 
+    def __eq__(self, other):
+        """Return True iff self and other have the same attributes.
+        
+        Arguments:
+        - `other`:
+        """
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
+
 if __name__ == "__main__":
     reg_file = RegisterFile ()
     print reg_file

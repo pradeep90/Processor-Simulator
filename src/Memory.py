@@ -72,7 +72,22 @@ class Memory (object):
         
 
     def __str__ (self):
+        if self.list and type(self.list[0]) == list:
+            # print 'Memory __str__: instructions are list of tokens'
+            return '\n'.join (' '.join(instruction_in_list_format) 
+                              for instruction_in_list_format in self.list)
         return '\n'.join (self.list)
+
+    def __eq__(self, other):
+        """Return True iff self and other have the same attributes.
+        
+        Arguments:
+        - `other`:
+        """
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
 
 if __name__ == "__main__":
     memory = Memory ()

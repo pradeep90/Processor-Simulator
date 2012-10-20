@@ -2,42 +2,79 @@
 
 from Memory import Memory
 
+j_type_opcode_to_repr_map = {
+    '000010' : 'J',
+    '000011' : 'JAL',
+    }
+
+i_type_opcode_to_repr_map = {
+    '100000' : 'LB',
+    '101000' : 'SB',
+    '100011' : 'LW',
+    '101011' : 'SW',
+    
+    '001000' : 'ADDI',
+    '001100' : 'ANDI',
+    '001101' : 'ORI',
+    '001110' : 'XORI',
+    '000100' : 'BEQ',
+    '000101' : 'BNE',
+    }
+
+r_type_opcode_to_repr_map = {
+    '100000' : 'ADD',
+    '100010' : 'SUB',
+    '011000' : 'MULT',
+    '011010' : 'DIV',
+    '100100' : 'AND',
+    '100101' : 'OR',
+    '100110' : 'XOR',
+    '100111' : 'NOR',
+    }
+
+reverse_j_type_opcode_to_repr_map = dict(
+    (v, k) for k, v in j_type_opcode_to_repr_map.iteritems())
+reverse_i_type_opcode_to_repr_map = dict(
+    (v, k) for k, v in i_type_opcode_to_repr_map.iteritems())
+reverse_r_type_opcode_to_repr_map = dict(
+    (v, k) for k, v in r_type_opcode_to_repr_map.iteritems())
+
+dicts_for_instruction = {
+    'I': (i_type_opcode_to_repr_map, reverse_i_type_opcode_to_repr_map),
+    'J': (j_type_opcode_to_repr_map, reverse_j_type_opcode_to_repr_map),
+    'R': (r_type_opcode_to_repr_map, reverse_r_type_opcode_to_repr_map),
+    }
+
 class Instruction (object):
-
-    j_type_opcode_to_repr_map = {
-        '000010' : 'J',
-        '000011' : 'JAL',
-        }
-
-    i_type_opcode_to_repr_map = {
-        '100000' : 'LB',
-        '101000' : 'SB',
-        '100011' : 'LW',
-        '101011' : 'SW',
-
-        '001000' : 'ADDI',
-        '001100' : 'ANDI',
-        '001101' : 'ORI',
-        '001110' : 'XORI',
-        '000100' : 'BEQ',
-        '000101' : 'BNE',
-        }
-
-    r_type_opcode_to_repr_map = {
-        '100000' : 'ADD',
-        '100010' : 'SUB',
-        '011000' : 'MULT',
-        '011010' : 'DIV',
-        '100100' : 'AND',
-        '100101' : 'OR',
-        '100110' : 'XOR',
-        '100111' : 'NOR',
-        }
-
+    
     def __init__ (self, bin_instr):
+        # print 'bin_instr', bin_instr, 'str(type(bin_instr))', str(type(bin_instr))
         self.register = bin_instr
         self.buff = {}
         self.interpret ()
+
+    # TODO
+    @staticmethod
+    def get_binary_reprn_of_HR_instruction(human_readable_instruction):
+        """Return binary equivalent of human_readable_instruction.
+        
+        Arguments:
+        - `human_readable_instruction`: string of instruction tokens
+        """
+        # human_readable_instruction = human_readable_instruction.split()
+        # reverse_dict = dicts_for_instruction[human_readable_instruction[0]][1]
+
+        # binary_string = ''
+        # binary_string += human_readable_instruction[0]
+        # binary_string += reverse_dict[human_readable_instruction[1]]
+
+        # # if human_readable_instruction[0] == 'I':
+        # #     binary_string +=
+        # print 'reverse_dict', reverse_dict
+        # binary_string =  ''.join(reverse_dict[token].ljust(32, '0')
+        #                          for token in human_readable_instruction)
+        # print binary_string
+        pass
 
     def interpret( self ) :
         '''
@@ -83,19 +120,19 @@ class Instruction (object):
 
         try:
             self.type = 'J'
-            self.opcode = self.j_type_opcode_to_repr_map [i_bin [:6]]
+            self.opcode = j_type_opcode_to_repr_map [i_bin [:6]]
             self.offset_from_pc = int (i_bin [6:], 2)
         except:
             try:
                 self.type = 'I'
-                self.opcode = self.i_type_opcode_to_repr_map [i_bin [:6]]
+                self.opcode = i_type_opcode_to_repr_map [i_bin [:6]]
                 self.rs = int (i_bin [6:11], 2)
                 self.rt = int (i_bin [11:16], 2)
                 self.immediate = int (i_bin [16:], 2)
             except:
                 try :
                     self.type = 'R'
-                    self.opcode = self.r_type_opcode_to_repr_map [i_bin [-6:]]
+                    self.opcode = r_type_opcode_to_repr_map [i_bin [-6:]]
                     self.rs = int (i_bin [6:11], 2)
                     self.rt = int (i_bin [11:16], 2)
                     self.rd = int (i_bin [16:21], 2)

@@ -25,7 +25,31 @@ class InstructionTest(unittest.TestCase):
         instruction1 = Instruction.Instruction(bin_string)
         instruction2 = Instruction.Instruction(bin_string)
         self.assertEqual(instruction1, instruction2)
-    
+
+    # TODO
+    # def test_get_binary_reprn_of_HR_instruction(self):
+    #     instruction_list = [
+    #         'I BEQ  R2 R5 4',
+    #         'R ADD  R1 R2 R3',
+    #         'R ADD  R2 R0 R1',
+    #         'R ADD  R3 R0 R2',
+    #         'J J    3',
+    #         ]
+    #     binary_instruction_list = [
+    #         '',
+    #         '',
+    #         '',
+    #         '',
+    #         '',
+    #         ]
+
+    #     # instruction_list = [instruction.split() for instruction in instruction_list]
+    #     for binary_instruction, instruction in zip(binary_instruction_list, 
+    #                                                instruction_list):
+    #         self.assertEqual(
+    #             Instruction.Instruction.get_binary_reprn_of_HR_instruction(instruction), 
+    #             binary_instruction)
+
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(InstructionTest)
     return suite

@@ -32,23 +32,26 @@ class ProcessorTest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_fetchInstruction(self):
+    def test_fetch_instruction(self):
         fetch_input_buffer = {'is_decoder_stalled': True}
-        self.assertEqual(self.processor.fetchInstruction(fetch_input_buffer),
+        self.assertEqual(self.processor.fetch_instruction(fetch_input_buffer),
                          {})
 
         fetch_input_buffer = {'memory': self.memory,
                               'PC': 0}
         fetcher_buffer = {'instr' : Instruction.Instruction (self.memory[0]),
                           'npc' : 4}
-        actual_buffer = self.processor.fetchInstruction(fetch_input_buffer)
+        actual_buffer = self.processor.fetch_instruction(fetch_input_buffer)
         for key in fetcher_buffer.keys():
             self.assertEqual(actual_buffer[key],
                              fetcher_buffer[key])
 
         fetch_input_buffer['PC'] = 200000
-        self.assertEqual(self.processor.fetchInstruction(fetch_input_buffer),
+        self.assertEqual(self.processor.fetch_instruction(fetch_input_buffer),
                          {})
+
+    def test_decode_R_instruction(self):
+        pass
     
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(ProcessorTest)
