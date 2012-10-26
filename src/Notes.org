@@ -6,6 +6,12 @@
 *** do_operation
 *** DONE fetchInstruction
     CLOCK: [2012-10-20 Sat 19:35]--[2012-10-20 Sat 20:29] =>  0:54
+*** DONE decode R
+    CLOCK: [2012-10-26 Fri 22:39]--[2012-10-26 Fri 22:43] =>  0:04
+*** TODO decode 
+** Isolate the stages and make them functional
+   CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
+   CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15
 * Memory
 ** DONE Refactoring - docstrings + unit tests
    CLOCK: [2012-10-20 Sat 19:09]--[2012-10-20 Sat 19:33] =>  0:24

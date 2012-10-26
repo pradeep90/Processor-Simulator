@@ -6,13 +6,14 @@ from warnings import warn
 from Instruction import Instruction
 from Memory import Memory
 from RegisterFile import RegisterFile
+from pprint import pprint
 import pickle
 
 default_data_file_name =  'new-cycle-data.pickle'
 
 class Processor (object):
     fetcher_buffer = {}
-    reg_fetcher_buffer = {}
+    decoder_buffer = {}
     executor_buffer = {}
     memory_buffer = {}
 
@@ -71,6 +72,7 @@ class Processor (object):
           + branch_target_pc
           + is_decoder_stalled
           + register_file
+          + instr_count
 
         TODO: Take in and pass on the register_file.
         """
@@ -79,17 +81,19 @@ class Processor (object):
         try:
             memory = fetch_input_buffer['memory']
             PC = fetch_input_buffer['PC']
+            instr_count = fetch_input_buffer['instr_count']
 
-            IR = self.memory [PC]
+            IR = memory [PC]
 
             # Is the NPC even needed anymore?
             # PC = NPC
             NPC = PC + 4
             print 'NPC changed to', NPC
 
-            self.instr_count += 1
+            instr_count += 1
             return {'instr': Instruction (IR),
-                    'npc': NPC}
+                    'npc': NPC,
+                    'PC': PC}
         except IndexError:
             # warn('IndexError in fetchInstruction')
             return {}
@@ -114,44 +118,133 @@ class Processor (object):
             return {}
 
     def decode_R_instruction(self, fetcher_buffer):
-        """Return reg_fetcher_buffer given fetcher_buffer.
+        """Return decoder_buffer given fetcher_buffer.
 
         R type: rd <- rs funct rt
         If applicable, mark the output register in the registerfile
         as dirty. And if the input registers are not dirty, then put
         them in the buffer.
 
-        reg_fetcher_buffer contains:
+        decoder_buffer contains:
         + modified register_file
         + next fetcher_buffer
         + instr
         + rs
+        + rt
         + npc
+        + is_decoder_stalled
 
         Arguments:
         - `fetcher_buffer`: contains
           + register_file
+          + instr
+          + npc
         """
         register_file = fetcher_buffer['register_file']
-        instr = self.fetcher_buffer ['instr']
-        npc = self.fetcher_buffer ['npc']
+        instr = fetcher_buffer ['instr']
+        npc = fetcher_buffer ['npc']
+        is_decoder_stalled = False
 
         if (register_file.isClean (instr.rs) and
             register_file.isClean (instr.rt)):
 
-            # TODO
-            self.fetcher_buffer = {}
-            self.register_file.setDirty (instr.rd)
+            fetcher_buffer = {}
+            register_file.setDirty (instr.rd)
+
             return {
+                'register_file': register_file,
+                'fetcher_buffer': fetcher_buffer,
+                'is_decoder_stalled': is_decoder_stalled,
                 'instr': instr,
-                'rs': [instr.rs, self.register_file [instr.rs]],
-                'rt': [instr.rt, self.register_file [instr.rt]],
+                'rs': [instr.rs, register_file [instr.rs]],
+                'rt': [instr.rt, register_file [instr.rt]],
                 'npc': npc,
                 }
         else:
-            self.decoder_stalled = True
-            self.register_file.setDirty (instr.rd)
-            return {}
+            is_decoder_stalled = True
+            register_file.setDirty (instr.rd)
+            return {
+                'register_file': register_file,
+                'fetcher_buffer': fetcher_buffer,
+                'is_decoder_stalled': is_decoder_stalled,
+            }
+
+    def decode_I_instruction(self, fetcher_buffer):
+        """Return decoder_buffer given fetcher_buffer.
+
+        I type: rt <- rs funct imm
+        I type load: rt <- mem [imm (rs)]
+        I type store: mem [imm (rs)] <- rt
+        I type branch: jump to imm depending on comparison of rs and rt
+
+        decoder_buffer contains:
+        + modified register_file
+        + next fetcher_buffer
+        + instr
+        + rs
+        + rt
+        + npc
+        + is_decoder_stalled
+
+        Arguments:
+        - `fetcher_buffer`: contains
+          + register_file
+          + instr
+          + npc
+        """
+        register_file = fetcher_buffer['register_file']
+        instr = fetcher_buffer ['instr']
+        npc = fetcher_buffer ['npc']
+        is_decoder_stalled = False
+
+        # I type: rt <- rs funct imm
+        # I type load: rt <- mem [imm (rs)]
+        if (instr.type == 'I' and instr.opcode in [
+                'ADDI', 'ANDI', 'ORI', 'XORI', 'LB', 'LW']):
+            if register_file.isClean (instr.rs):
+                fetcher_buffer = {}
+                register_file.setDirty (instr.rt)
+                return {
+                    'register_file': register_file,
+                    'fetcher_buffer': fetcher_buffer,
+                    'is_decoder_stalled': is_decoder_stalled,
+                    'instr': instr,
+                    'rs': [instr.rs, register_file [instr.rs]],
+                    'npc': npc,
+                    'immediate': instr.immediate
+                    }
+            else:
+                is_decoder_stalled = True
+                register_file.setDirty (instr.rt)
+                return {
+                    'register_file': register_file,
+                    'fetcher_buffer': fetcher_buffer,
+                    'is_decoder_stalled': is_decoder_stalled,
+                    }
+
+        # I type store: mem [imm (rs)] <- rt
+        # I type branch: jump to imm depending on comparison of rs and rt
+        elif (instr.type == 'I' and instr.opcode [0] in ['SB', 'BEQ', 'SW', 'BNE']):
+            if (register_file.isClean (instr.rs) and
+                register_file.isClean (instr.rt)):
+                fetcher_buffer = {}
+                return {
+                    'register_file': register_file,
+                    'fetcher_buffer': fetcher_buffer,
+                    'is_decoder_stalled': is_decoder_stalled,
+                    'instr': instr,
+                    'rs': [instr.rs, register_file [instr.rs]],
+                    'rt': [instr.rt, register_file [instr.rt]],
+                    'npc': npc,
+                    'immediate': instr.immediate
+                }
+            else:
+                is_decoder_stalled = True
+                return {
+                    'register_file': register_file,
+                    'fetcher_buffer': fetcher_buffer,
+                    'is_decoder_stalled': is_decoder_stalled,
+                }
 
     def decodeInstruction (self):
         """Decode the instr in fetcher_buffer and read from registers.
@@ -161,7 +254,7 @@ class Processor (object):
 
         Also, update the PC to the computed branch target.
 
-        Return reg_fetcher_buffer.
+        Return decoder_buffer.
 
         Remove references to fetcher_buffer. I think it is only
         emptied when there is NO decode stall. That logic should be in
@@ -249,25 +342,25 @@ class Processor (object):
         """
         """
         if self.mem_stalled: return {}
-        if not self.reg_fetcher_buffer.has_key ('instr'): return {}
-        instr = self.reg_fetcher_buffer ['instr']
-        npc = self.reg_fetcher_buffer ['npc']
+        if not self.decoder_buffer.has_key ('instr'): return {}
+        instr = self.decoder_buffer ['instr']
+        npc = self.decoder_buffer ['npc']
 
         self.executor_stalled = False
         if instr.type == 'J':
-            return self.reg_fetcher_buffer
+            return self.decoder_buffer
 
         if instr.type == 'R':
             # Check if operands are in the buffer, if not, we need to
             # stall (or do some orperand forwarding stuff)
-            if (self.reg_fetcher_buffer.has_key ('rs') and
-                self.reg_fetcher_buffer.has_key ('rt')):
+            if (self.decoder_buffer.has_key ('rs') and
+                self.decoder_buffer.has_key ('rt')):
                 self.register_file [instr.rd] = self.do_operation (
                     instr.opcode,
-                    self.reg_fetcher_buffer ['rs'] [1],
-                    self.reg_fetcher_buffer ['rt'] [1]
+                    self.decoder_buffer ['rs'] [1],
+                    self.decoder_buffer ['rt'] [1]
                 )
-                self.reg_fetcher_buffer = {}
+                self.decoder_buffer = {}
                 return {'instr': instr,
                         'npc': npc,
                         'rd': [instr.rd,
@@ -280,16 +373,16 @@ class Processor (object):
         if instr.type == 'I':
             # Check if operands are in the buffer, if not, we need to
             # stall (or do some orperand forwarding stuff)
-            if (self.reg_fetcher_buffer.has_key ('rs') and
-                self.reg_fetcher_buffer.has_key ('immediate')):
+            if (self.decoder_buffer.has_key ('rs') and
+                self.decoder_buffer.has_key ('immediate')):
                 # Immediate ALU operations
                 if len (instr.opcode) == 4:
                     self.register_file [instr.rt] = self.do_operation (
                         instr.opcode,
-                        self.reg_fetcher_buffer ['rs'] [1],
-                        self.reg_fetcher_buffer ['immediate']
+                        self.decoder_buffer ['rs'] [1],
+                        self.decoder_buffer ['immediate']
                     )
-                    self.reg_fetcher_buffer = {}
+                    self.decoder_buffer = {}
                     return {'instr': instr,
                             'npc': npc,
                             'rt': [instr.rt,
@@ -298,10 +391,10 @@ class Processor (object):
                 # Load : rt <- mem [imm (rs)]
                 if (len (instr.opcode) == 2 and
                     instr.opcode [0] in 'L'):
-                    memaddr = (self.reg_fetcher_buffer ['rs'] [1]
+                    memaddr = (self.decoder_buffer ['rs'] [1]
                                +
-                               self.reg_fetcher_buffer ['immediate'])
-                    self.reg_fetcher_buffer = {}
+                               self.decoder_buffer ['immediate'])
+                    self.decoder_buffer = {}
                     return {'instr': instr,
                             'npc': npc,
                             'rt': instr.rt,
@@ -310,10 +403,10 @@ class Processor (object):
                 # Store: mem [imm (rs)] <- rt
                 if (len (instr.opcode) == 2 and
                     instr.opcode [0] in 'S'):
-                    memaddr = (self.reg_fetcher_buffer ['rs'] [1]
+                    memaddr = (self.decoder_buffer ['rs'] [1]
                                +
-                               self.reg_fetcher_buffer ['immediate'])
-                    self.reg_fetcher_buffer = {}
+                               self.decoder_buffer ['immediate'])
+                    self.decoder_buffer = {}
                     return {'instr': instr,
                             'npc': npc,
                             'memaddr': memaddr,
@@ -324,25 +417,25 @@ class Processor (object):
                 self.executor_stalled = True
                 return {}
             # BEQ and BNE
-            if (self.reg_fetcher_buffer.has_key ('rs') and
-                self.reg_fetcher_buffer.has_key ('immediate') and
-                self.reg_fetcher_buffer.has_key ('rt')):
+            if (self.decoder_buffer.has_key ('rs') and
+                self.decoder_buffer.has_key ('immediate') and
+                self.decoder_buffer.has_key ('rt')):
                 condition_output = True
                 if (len (instr.opcode) == 3 and
                     instr.opcode == 'BEQ'):
                     condition_output = (
-                        self.reg_fetcher_buffer ['rs'] [1]
+                        self.decoder_buffer ['rs'] [1]
                         ==
-                        self.reg_fetcher_buffer ['rt'] [1]
+                        self.decoder_buffer ['rt'] [1]
                     )
                 elif (len (instr.opcode) == 3 and
                     instr.opcode == 'BNE'):
                     condition_output = not (
-                        self.reg_fetcher_buffer ['rs'] [1]
+                        self.decoder_buffer ['rs'] [1]
                         ==
-                        self.reg_fetcher_buffer ['rt'] [1]
+                        self.decoder_buffer ['rt'] [1]
                     )
-                self.reg_fetcher_buffer = {}
+                self.decoder_buffer = {}
                 if condition_output:
                     self.PC = npc + 4 * instr.immediate
                     print 'BNE/BEQ: PC changed to', self.PC
@@ -397,7 +490,7 @@ class Processor (object):
     def printBuffers (self):
         print "PC:", self.PC
         for buf in ['fetcher_buffer',
-                    'reg_fetcher_buffer',
+                    'decoder_buffer',
                     'executor_buffer',
                     'memory_buffer']:
             print buf
@@ -412,7 +505,7 @@ class Processor (object):
 
         curr_data_dict = {
             'fetcher_buffer': self.fetcher_buffer,
-            'reg_fetcher_buffer': self.reg_fetcher_buffer,
+            'decoder_buffer': self.decoder_buffer,
             'executor_buffer': self.executor_buffer,
             'memory_buffer': self.memory_buffer,
             'decoder_stalled': self.decoder_stalled,
@@ -457,7 +550,9 @@ class Processor (object):
         return cycle_data_list
 
 
-    def start (self, cycle_data_file_name = default_data_file_name):
+    def start(self, cycle_data_file_name = default_data_file_name):
+        """Start execution of instructions from the start_address.
+        """
         self.instruction_addres = self.start_address
         self.more_instructions_to_fetch = True
 
@@ -472,36 +567,43 @@ class Processor (object):
             cycle_data_list.append(self.get_all_curr_data())
 
             self.printBuffers ()
-            # print
             print self.register_file
 
             # TODO: Make it such that you run them in reverse order
             # and pass along the is_X_stalled value to the previous
             # pipeline stage.
 
-            foo = (
-                self.writeBackRegisters (),
-                self.doMemoryOperations () or self.memory_buffer,
-                self.execute () or self.executor_buffer,
-                self.decodeInstruction () or self.reg_fetcher_buffer,
-                self.fetchInstruction () or self.fetcher_buffer,
-            )
-            (
-                blah,
-                self.memory_buffer,
-                self.executor_buffer,
-                self.reg_fetcher_buffer,
-                self.fetcher_buffer,
-            ) = foo
+            self.writeBackRegisters ()
+            self.memory_buffer = self.doMemoryOperations () or self.memory_buffer
+            self.executor_buffer = self.execute () or self.executor_buffer
+            self.decoder_buffer = self.decodeInstruction () or self.decoder_buffer
+
+            fetch_input_buffer = {
+                'PC': self.PC,
+                'memory': self.memory,
+                'is_decoder_stalled': self.decoder_stalled,
+                'instr_count': self.instr_count,
+                }
+            gen_fetcher_buffer = self.fetch_instruction (fetch_input_buffer) or self.fetcher_buffer
+            # self.fetcher_buffer = self.fetch_instruction (fetch_input_buffer) or self.fetcher_buffer
+            self.fetcher_buffer = self.fetchInstruction() or self.fetcher_buffer
+
+            if gen_fetcher_buffer != self.fetcher_buffer:
+                print 'gen_fetcher_buffer'
+                pprint(gen_fetcher_buffer)
+                print 'self.fetcher_buffer'
+                pprint(self.fetcher_buffer)
+                
+
             self.more_instructions_to_fetch = (
                 self.memory_buffer or
                 self.executor_buffer or
-                self.reg_fetcher_buffer or
+                self.decoder_buffer or
                 self.fetcher_buffer
             )
 
         self.save_cycle_data(cycle_data_list, cycle_data_file_name)
-            
+
     def getCPI (self):
         return (1.0 * self.cycle_count) / self.instr_count
 

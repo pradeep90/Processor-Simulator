@@ -31,6 +31,7 @@ class ProcessorRegressionTest(unittest.TestCase):
             new_cycle_dict = self.new_data_list[cycle_num]
             old_cycle_dict = self.old_data_list[cycle_num]
             for key in old_cycle_dict:
+                # print key, new_cycle_dict[key], old_cycle_dict[key]
                 self.assertEqual(new_cycle_dict[key],
                                  old_cycle_dict[key],
                     'Failed while testing {0}. {1} != {2}'.format(
