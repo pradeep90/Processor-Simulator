@@ -104,9 +104,47 @@ class ProcessorTest(unittest.TestCase):
                          decoder_buffer)
         self.assertTrue(register_file.isDirty(instr.rd))
 
-    def test_decode_I_instruction(self):
-        instruction_string = 'R ADD  R1 R2 R3'
-        instr = Instruction.Instruction (self.memory[0])
+    def test_decode_I_instruction_funct_and_load(self):
+        instruction_string = 'I ADDI R1 R1 1'
+        instr = Instruction.Instruction (instruction_string.strip().split())
+        register_file = self.register_file
+        npc = 4
+        is_decoder_stalled = False
+
+        register_file.setClean(instr.rs)
+
+        fetcher_buffer = {
+            'instr': instr,
+            'npc': npc,
+            'register_file': register_file,
+        }
+
+        decoder_buffer = {
+            'register_file': register_file,
+            'fetcher_buffer': {},
+            'is_decoder_stalled': False,
+            'instr': instr,
+            'rs': [instr.rs, register_file [instr.rs]],
+            'npc': npc,
+            'immediate': instr.immediate,
+            }
+        self.assertEqual(self.processor.decode_I_instruction(fetcher_buffer),
+                         decoder_buffer)
+        self.assertTrue(register_file.isDirty(instr.rt))
+
+        register_file.setDirty(instr.rs)
+        decoder_buffer = {
+            'register_file': register_file,
+            'fetcher_buffer': fetcher_buffer,
+            'is_decoder_stalled': True,
+            }
+        self.assertEqual(self.processor.decode_I_instruction(fetcher_buffer),
+                         decoder_buffer)
+        self.assertTrue(register_file.isDirty(instr.rt))
+
+    def test_decode_I_instruction_store_and_branch(self):
+        instruction_string = 'I BEQ  R2 R5 4'
+        instr = Instruction.Instruction (instruction_string.strip().split())
         register_file = self.register_file
         npc = 4
         is_decoder_stalled = False
@@ -125,21 +163,154 @@ class ProcessorTest(unittest.TestCase):
             'fetcher_buffer': {},
             'is_decoder_stalled': False,
             'instr': instr,
-            'rs': [instr.rs, self.register_file [instr.rs]],
-            'rt': [instr.rt, self.register_file [instr.rt]],
+            'rs': [instr.rs, register_file [instr.rs]],
+            'rt': [instr.rt, register_file [instr.rt]],
             'npc': npc,
+            'immediate': instr.immediate,
             }
-        self.assertEqual(self.processor.decode_R_instruction(fetcher_buffer),
+        self.assertEqual(self.processor.decode_I_instruction(fetcher_buffer),
                          decoder_buffer)
-        register_file.setDirty(instr.rt)
+
+        register_file.setDirty(instr.rs)
         decoder_buffer = {
             'register_file': register_file,
             'fetcher_buffer': fetcher_buffer,
             'is_decoder_stalled': True,
             }
-        self.assertEqual(self.processor.decode_R_instruction(fetcher_buffer),
+        self.assertEqual(self.processor.decode_I_instruction(fetcher_buffer),
                          decoder_buffer)
-    
+
+    def test_get_jump_address(self): 
+        instruction_string = 'J J    3'
+        instr = Instruction.Instruction (instruction_string.strip().split())
+        npc = 4
+        self.assertEqual(Processor.Processor.get_jump_address(npc, instr), 12)
+
+    def test_decode_J_instruction(self):
+        instruction_string = 'J J    3'
+        instr = Instruction.Instruction (instruction_string.strip().split())
+        register_file = self.register_file
+        npc = 4
+        is_decoder_stalled = False
+
+        fetcher_buffer = {
+            'instr': instr,
+            'npc': npc,
+            'register_file': register_file,
+        }
+
+        decoder_buffer = {
+            'register_file': register_file,
+            'fetcher_buffer': {},
+            'is_decoder_stalled': False,
+            'instr': instr,
+            'npc': npc,
+            'PC': 12,
+            }
+        self.assertEqual(self.processor.decode_J_instruction(fetcher_buffer),
+                         decoder_buffer)
+
+    def test_decodeInstruction(self): 
+        instruction_string = 'J J    3'
+        instr = Instruction.Instruction (instruction_string.strip().split())
+        register_file = self.register_file
+        npc = 4
+        is_decoder_stalled = False
+
+        fetcher_buffer = {
+            'instr': instr,
+            'npc': npc,
+            'register_file': register_file,
+            'is_executor_stalled': True,
+        }
+
+        self.assertEqual(self.processor.decode_instruction(fetcher_buffer), {})
+
+        fetcher_buffer.pop('is_executor_stalled')
+        fetcher_buffer.pop('instr')
+        self.assertEqual(self.processor.decode_instruction(fetcher_buffer), {})
+
+    def test_execute_R_instruction(self): 
+        instruction_string = 'R ADD  R1 R2 R3'
+        instr = Instruction.Instruction (instruction_string.strip().split())
+        register_file = self.register_file
+        npc = 4
+
+        memory = Memory.Memory([instruction_string.strip().split()])
+        decoder_buffer = self.processor.get_stage_output(
+            memory, register_file, 0, 0, 'decode')
+
+        mem_buffer = {
+            'register_file': register_file,
+            'decoder_buffer': {},
+            'is_executor_stalled': False,
+            'instr': instr,
+            'npc': npc,
+            'rd': [instr.rd, register_file [instr.rd]],
+            }
+        self.assertEqual(self.processor.execute_R_instruction(decoder_buffer), 
+                         mem_buffer)
+
+        decoder_buffer.pop('rs')
+        mem_buffer = {
+            'register_file': register_file,
+            'decoder_buffer': decoder_buffer,
+            'is_executor_stalled': True,
+            }
+        self.assertEqual(self.processor.execute_R_instruction(decoder_buffer),
+                         mem_buffer)
+
+    # def test_execute_I_instruction(self): 
+    #     instruction_list = [
+    #         'I ADDI R1 R1 1',
+    #         # 'I LW  R2 R5 4',
+    #         # 'I BEQ  R2 R5 4',
+    #     ]
+    #     instruction_list = [instruction.strip().split() 
+    #                         for instruction in instruction_list]
+    #     register_file = self.register_file
+    #     memory = Memory.Memory(instruction_list)
+    #     npc = 4
+    #     mem_buffer_list = [
+    #         {
+    #             'register_file': register_file,
+    #             'decoder_buffer': self.processor.get_stage_output(
+    #                 memory, register_file, i * 4, 0, 'decode'),
+    #             'is_executor_stalled': False,
+    #             'instr': Instruction.Instruction(memory[i * 4]),
+    #             'npc': npc,
+    #             'rt': [Instruction.Instruction(memory[i * 4]).rt, 
+    #                    register_file [Instruction.Instruction(memory[i * 4]).rt] + 1]
+    #         }
+    #         for i in xrange(len(instruction_list))]
+
+    #     for i in xrange(len(instruction_list)):
+    #         decoder_buffer = self.processor.get_stage_output(
+    #             memory, register_file, i * 4, 0, 'decode')
+    #         print decoder_buffer
+    #         self.assertEqual(
+    #             self.processor.execute_I_instruction(decoder_buffer), 
+    #             mem_buffer_list[i])
+
+    def test_execute(self): 
+        instruction_string = 'R ADD  R1 R2 R3'
+        instr = Instruction.Instruction (instruction_string.strip().split())
+        register_file = self.register_file
+        npc = 4
+
+        decoder_buffer = {
+            'instr': instr,
+            'npc': npc,
+            'register_file': register_file,
+            'is_mem_stalled': True,
+        }
+
+        self.assertEqual(self.processor.execute(decoder_buffer), {})
+
+        decoder_buffer.pop('is_mem_stalled')
+        decoder_buffer.pop('instr')
+        self.assertEqual(self.processor.execute(decoder_buffer), {})
+
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(ProcessorTest)
     return suite

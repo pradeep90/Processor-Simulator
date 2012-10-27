@@ -28,6 +28,13 @@ class MemoryTest(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_get_binary_string(self): 
+        integer = 7
+        self.assertEqual(Memory.Memory.get_binary_string(integer), 
+                         '00000000000000000000000000000111')
+        self.assertEqual(Memory.Memory.get_binary_string(integer, 8), 
+                         '00000000000000000000000000000111'[-8:])
+
     def test_get_bin_from_hex_instruction(self):
         hex_string = '0x343'
         bin_string = '00000000000000000000001101000011'

@@ -27,13 +27,25 @@ class Memory (object):
         return self.list.__len__ ()
 
     @staticmethod
+    def get_binary_string(integer, width = 32):
+        """Return binary string equivalent of integer.
+        
+        Arguments:
+        - `integer`:
+        - `width`:
+        """
+        # The [2:] is to remove the '0x' prefix.
+        return bin (integer) [2:].zfill (width)
+
+    @staticmethod
     def get_bin_from_hex_instruction(hex_instrn_string):
         """Return binary version of the hex instruction string.
         
         Arguments:
         - `hex_instrn_string`:
         """
-        return bin (int (hex_instrn_string, 16)) [2:].zfill (32)
+        hex_integer = int (hex_instrn_string, 16)
+        return Memory.get_binary_string(hex_integer)
     
     def set_bin_instruction_list(self, bin_instruction_list):
         """Set bin_instruction_list.
