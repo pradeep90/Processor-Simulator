@@ -14,11 +14,18 @@
     CLOCK: [2012-10-27 Sat 14:17]--[2012-10-27 Sat 14:58] =>  0:41
 *** DONE decode
 *** TODO execute
-** TODO Making Buffer classes 
-   CLOCK: [2012-10-29 Mon 14:58]
+** DONE Make Buffer classes 
+   CLOCK: [2012-10-29 Mon 14:58]--[2012-10-29 Mon 16:00] =>  1:02
+*** DONE stage buffer
+*** DONE fetch input buffer
+*** DONE fetcher buffer
 ** Isolate the stages and make them functional
    CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
    CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15
+*** DONE Make a fetch stage and decode stage class.
+    CLOCK: [2012-10-29 Mon 16:00]--[2012-10-29 Mon 16:27] =>  0:27
+*** TODO Make an execute stage
+    CLOCK: [2012-10-29 Mon 16:27]
 * Memory
 ** DONE Refactoring - docstrings + unit tests
    CLOCK: [2012-10-20 Sat 19:09]--[2012-10-20 Sat 19:33] =>  0:24
