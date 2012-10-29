@@ -3,6 +3,9 @@
 import test_memory
 import test_processor
 import test_instruction
+import test_stage_buffer
+import test_fetcher_buffer
+import test_fetch_input_buffer
 import unittest
 
 if __name__ == '__main__':
@@ -10,6 +13,9 @@ if __name__ == '__main__':
         test_memory.get_suite(),
         test_processor.get_suite(),
         test_instruction.get_suite(),
+        test_stage_buffer.get_suite(),
+        test_fetcher_buffer.get_suite(),
+        test_fetch_input_buffer.get_suite(),
         ]
     
     all_tests = unittest.TestSuite(test_suites)

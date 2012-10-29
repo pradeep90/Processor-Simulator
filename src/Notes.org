@@ -14,7 +14,8 @@
     CLOCK: [2012-10-27 Sat 14:17]--[2012-10-27 Sat 14:58] =>  0:41
 *** DONE decode
 *** TODO execute
-    CLOCK: [2012-10-27 Sat 15:50]
+** TODO Making Buffer classes 
+   CLOCK: [2012-10-29 Mon 14:58]
 ** Isolate the stages and make them functional
    CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
    CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15

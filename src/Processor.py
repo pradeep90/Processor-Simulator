@@ -7,12 +7,13 @@ from Instruction import Instruction
 from Memory import Memory
 from RegisterFile import RegisterFile
 from pprint import pprint
+from fetcher_buffer import FetcherBuffer
 import pickle
 
 default_data_file_name =  'new-cycle-data.pickle'
 
 class Processor (object):
-    fetcher_buffer = {}
+    fetcher_buffer = FetcherBuffer()
     decoder_buffer = {}
     executor_buffer = {}
     memory_buffer = {}
@@ -59,7 +60,9 @@ class Processor (object):
                 + ')')
         return eval (expr)
 
-    def fetch_instruction (self, fetch_input_buffer = None):
+    def fetch_instruction (self, 
+                           fetch_input_buffer = None, 
+                           is_decoder_stalled = False):
         """Based on PC value, fetch instruction from memory.
 
         Update PC.
@@ -71,14 +74,13 @@ class Processor (object):
           + memory
           + is_branch_reg_zero
           + branch_target_pc
-          + is_decoder_stalled
           + register_file
           + instr_count
 
         TODO: Take in and pass on the register_file.
         """
-        if fetch_input_buffer.get('is_decoder_stalled', False):
-            return {}
+        if is_decoder_stalled:
+            return FetcherBuffer({})
         try:
             memory = fetch_input_buffer['memory']
             PC = fetch_input_buffer['PC']
@@ -92,9 +94,11 @@ class Processor (object):
             print 'NPC changed to', NPC
 
             instr_count += 1
-            return {'instr': Instruction (IR),
-                    'npc': NPC,
-                    'PC': PC}
+            return FetcherBuffer({
+                'instr': Instruction (IR),
+                'npc': NPC,
+                'PC': PC
+                })
         except IndexError:
             # warn('IndexError in fetchInstruction')
             return {}
@@ -302,7 +306,7 @@ class Processor (object):
             'PC': PC,
             }
 
-    def decode_instruction (self, fetcher_buffer):
+    def decode_instruction (self, fetcher_buffer, is_executor_stalled = False):
         """Decode the instr in fetcher_buffer and read from registers.
 
         Check for possible branch. Compute branch target address, if
@@ -312,9 +316,9 @@ class Processor (object):
 
         Return decoder_buffer.
         """
-        if fetcher_buffer.get('is_executor_stalled', False): 
+        if is_executor_stalled: 
             return {}
-        if not fetcher_buffer.has_key ('instr'): 
+        if fetcher_buffer.instr is None: 
             return {}
 
         instr = fetcher_buffer['instr']
@@ -635,7 +639,8 @@ class Processor (object):
             print 'Read cycle_data_list from {0}'.format(cycle_data_file_name)
         return cycle_data_list
     
-    # TODO
+    # TODO: Be careful. In reality, the stages are executed in reverse
+    # order.
     def get_stage_output(self, memory, register_file, pc, instr_count, 
                          stage_name):
         """Return the output buffer of stage given the initial conditions.
@@ -659,9 +664,7 @@ class Processor (object):
         if stage_name == 'fetch':
             return fetcher_buffer
 
-        fetcher_buffer.update({
-            'register_file': register_file
-            })
+        fetcher_buffer.register_file = register_file
         decoder_buffer = self.decode_instruction(fetcher_buffer)
 
         if stage_name == 'decode':

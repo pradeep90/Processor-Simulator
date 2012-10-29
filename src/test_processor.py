@@ -6,6 +6,8 @@ import Instruction
 import unittest
 from RegisterFile import RegisterFile
 from pprint import pprint
+from fetcher_buffer import FetcherBuffer
+from fetch_input_buffer import FetchInputBuffer
 
 class ProcessorTest(unittest.TestCase):
     
@@ -46,14 +48,16 @@ class ProcessorTest(unittest.TestCase):
         pass
 
     def test_fetch_instruction(self):
-        fetch_input_buffer = {'is_decoder_stalled': True}
-        self.assertEqual(self.processor.fetch_instruction(fetch_input_buffer),
-                         {})
+        # Decoder Stalled
+        fetch_input_buffer = FetchInputBuffer({
+            'memory': self.memory,
+            'PC': 0,
+            'instr_count': 0,
+            })
+        self.assertEqual(self.processor.fetch_instruction(fetch_input_buffer, 
+                                                          True),
+                         FetcherBuffer({}))
 
-        fetch_input_buffer = {'memory': self.memory,
-                              'PC': 0,
-                              'instr_count': 0,
-                              }
         fetcher_buffer = {'instr' : Instruction.Instruction (self.memory[0]),
                           'npc' : 4}
         actual_buffer = self.processor.fetch_instruction(fetch_input_buffer)
@@ -217,17 +221,16 @@ class ProcessorTest(unittest.TestCase):
         npc = 4
         is_decoder_stalled = False
 
-        fetcher_buffer = {
+        fetcher_buffer = FetcherBuffer({
             'instr': instr,
             'npc': npc,
             'register_file': register_file,
-            'is_executor_stalled': True,
-        }
+        })
 
-        self.assertEqual(self.processor.decode_instruction(fetcher_buffer), {})
+        self.assertEqual(self.processor.decode_instruction(fetcher_buffer, True), 
+                         {})
 
-        fetcher_buffer.pop('is_executor_stalled')
-        fetcher_buffer.pop('instr')
+        fetcher_buffer.instr = None
         self.assertEqual(self.processor.decode_instruction(fetcher_buffer), {})
 
     def test_execute_R_instruction(self): 
@@ -263,34 +266,42 @@ class ProcessorTest(unittest.TestCase):
     # def test_execute_I_instruction(self): 
     #     instruction_list = [
     #         'I ADDI R1 R1 1',
-    #         # 'I LW  R2 R5 4',
-    #         # 'I BEQ  R2 R5 4',
+    #         'I LW  R2 R5 4',
+    #         'I BEQ  R2 R5 4',
+    #     ]
+
+    #     rt_val_list = [
+    #         [1, 1],
+    #         5,
+    #         None,
     #     ]
     #     instruction_list = [instruction.strip().split() 
     #                         for instruction in instruction_list]
     #     register_file = self.register_file
     #     memory = Memory.Memory(instruction_list)
     #     npc = 4
+
+    #     register_file_list = [RegisterFile()] * len(instruction_list)
     #     mem_buffer_list = [
     #         {
-    #             'register_file': register_file,
-    #             'decoder_buffer': self.processor.get_stage_output(
-    #                 memory, register_file, i * 4, 0, 'decode'),
+    #             'register_file': register_file_list[i],
+    #             'decoder_buffer': {},
     #             'is_executor_stalled': False,
     #             'instr': Instruction.Instruction(memory[i * 4]),
-    #             'npc': npc,
-    #             'rt': [Instruction.Instruction(memory[i * 4]).rt, 
-    #                    register_file [Instruction.Instruction(memory[i * 4]).rt] + 1]
+    #             'npc': npc + i * 4,
+    #             'rt': rt_val_list[i],
+    #             'memaddr': 4,
     #         }
     #         for i in xrange(len(instruction_list))]
 
     #     for i in xrange(len(instruction_list)):
     #         decoder_buffer = self.processor.get_stage_output(
-    #             memory, register_file, i * 4, 0, 'decode')
-    #         print decoder_buffer
-    #         self.assertEqual(
-    #             self.processor.execute_I_instruction(decoder_buffer), 
-    #             mem_buffer_list[i])
+    #             memory, register_file_list[i], i * 4, 0, 'decode')
+    #         actual_mem_buffer = self.processor.execute_I_instruction(decoder_buffer)
+    #         pprint(actual_mem_buffer)
+    #         for key in actual_mem_buffer:
+    #             print key
+    #             self.assertEqual(actual_mem_buffer[key], mem_buffer_list[i][key])
 
     def test_execute(self): 
         instruction_string = 'R ADD  R1 R2 R3'
