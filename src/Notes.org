@@ -24,8 +24,8 @@
    CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15
 *** DONE Make a fetch stage and decode stage class.
     CLOCK: [2012-10-29 Mon 16:00]--[2012-10-29 Mon 16:27] =>  0:27
-*** TODO Make an execute stage
-    CLOCK: [2012-10-29 Mon 16:27]
+*** DONE Make an execute stage
+    CLOCK: [2012-10-29 Mon 16:27]--[2012-10-29 Mon 16:52] =>  0:25
 * Memory
 ** DONE Refactoring - docstrings + unit tests
    CLOCK: [2012-10-20 Sat 19:09]--[2012-10-20 Sat 19:33] =>  0:24
