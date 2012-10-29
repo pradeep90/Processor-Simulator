@@ -8,6 +8,7 @@ import test_fetcher_buffer
 import test_fetch_input_buffer
 import test_fetch_stage
 import test_decode_stage
+import test_execute_stage
 import unittest
 
 if __name__ == '__main__':
@@ -20,6 +21,7 @@ if __name__ == '__main__':
         test_fetch_input_buffer.get_suite(),
         test_fetch_stage.get_suite(),
         test_decode_stage.get_suite(),
+        test_execute_stage.get_suite(),
         ]
     
     all_tests = unittest.TestSuite(test_suites)

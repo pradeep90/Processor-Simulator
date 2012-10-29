@@ -10,6 +10,7 @@ from pprint import pprint
 from fetcher_buffer import FetcherBuffer
 from fetch_stage import FetchStage
 from decode_stage import DecodeStage
+from execute_stage import ExecuteStage
 import pickle
 
 default_data_file_name =  'new-cycle-data.pickle'
@@ -61,255 +62,6 @@ class Processor (object):
                 + str (oper1) + opr [1] + str (oper2)
                 + ')')
         return eval (expr)
-
-
-    def execute_R_instruction(self, decoder_buffer):
-        """Execute the R instruction and update the register file.
-
-        Return mem_buffer.
-
-        mem_buffer contains:
-        + register_file
-        + next decoder_buffer
-        + instr
-        + npc
-        + is_executor_stalled
-        
-        Arguments:
-        - `decoder_buffer`:
-          + instr
-          + npc
-          + register_file
-          + is_mem_stalled
-        """
-        instr = decoder_buffer['instr']
-        register_file = decoder_buffer['register_file']
-        npc = decoder_buffer['npc']
-        is_executor_stalled = False
-
-        # Check if operands are in the buffer
-        if (decoder_buffer.has_key ('rs') and
-            decoder_buffer.has_key ('rt')):
-            register_file [instr.rd] = self.do_operation (
-                instr.opcode,
-                decoder_buffer ['rs'] [1],
-                decoder_buffer ['rt'] [1]
-                )
-            decoder_buffer = {}
-            return {
-                'register_file': register_file,
-                'decoder_buffer': decoder_buffer,
-                'is_executor_stalled': is_executor_stalled,
-                'instr': instr,
-                'npc': npc,
-                'rd': [instr.rd, register_file [instr.rd]],
-                }
-        else:
-            # Here, we should take care of operand fowarding
-            is_executor_stalled = True
-            return {
-                'register_file': register_file,
-                'decoder_buffer': decoder_buffer,
-                'is_executor_stalled': is_executor_stalled,
-                }
-        
-    def execute_I_instruction(self, decoder_buffer):
-        """Execute the I instruction and update the register file.
-
-        Return mem_buffer.
-
-        mem_buffer contains:
-        + register_file
-        + next decoder_buffer
-        + is_executor_stalled
-        + instr
-        + npc
-        + rt
-        + memaddr (optional)
-        
-        Arguments:
-        - `decoder_buffer`:
-          + instr
-          + npc
-          + register_file
-          + is_mem_stalled
-        """
-        instr = decoder_buffer['instr']
-        register_file = decoder_buffer['register_file']
-        npc = decoder_buffer['npc']
-        is_executor_stalled = False
-
-        # Check if operands are in the buffer.
-        if (decoder_buffer.has_key ('rs') and
-            decoder_buffer.has_key ('immediate')):
-            # Immediate ALU operations
-            if len (instr.opcode) == 4:
-                register_file [instr.rt] = self.do_operation (
-                    instr.opcode,
-                    decoder_buffer ['rs'] [1],
-                    decoder_buffer ['immediate']
-                )
-                decoder_buffer = {}
-                return {
-                    'register_file': register_file,
-                    'decoder_buffer': decoder_buffer,
-                    'is_executor_stalled': is_executor_stalled,
-                    'instr': instr,
-                    'npc': npc,
-                    'rt': [instr.rt, register_file [instr.rt]]
-                    }
-
-            # Load : rt <- mem [imm (rs)]
-            if (len (instr.opcode) == 2 and
-                instr.opcode [0] in 'L'):
-                memaddr = (decoder_buffer ['rs'] [1]
-                           +
-                           decoder_buffer ['immediate'])
-                decoder_buffer = {}
-                return {
-                    'register_file': register_file,
-                    'decoder_buffer': decoder_buffer,
-                    'is_executor_stalled': is_executor_stalled,
-                    'instr': instr,
-                    'npc': npc,
-                    'rt': instr.rt,
-                    'memaddr': memaddr
-                    }
-
-            # Store: mem [imm (rs)] <- rt
-            if (len (instr.opcode) == 2 and
-                instr.opcode [0] in 'S'):
-                memaddr = (decoder_buffer ['rs'] [1]
-                           +
-                           decoder_buffer ['immediate'])
-                decoder_buffer = {}
-                return {
-                    'register_file': register_file,
-                    'decoder_buffer': decoder_buffer,
-                    'is_executor_stalled': is_executor_stalled,
-                    'instr': instr,
-                    'npc': npc,
-                    'rt': [instr.rt, register_file [instr.rt]],
-                    'memaddr': memaddr,
-                    }
-
-        else:
-            is_executor_stalled = True
-            return {
-                'register_file': register_file,
-                'decoder_buffer': decoder_buffer,
-                'is_executor_stalled': is_executor_stalled,
-                }
-
-        # BEQ and BNE
-        if (decoder_buffer.has_key ('rs') and
-            decoder_buffer.has_key ('immediate') and
-            decoder_buffer.has_key ('rt')):
-            condition_output = True
-            if (len (instr.opcode) == 3 and
-                instr.opcode == 'BEQ'):
-                condition_output = (
-                    decoder_buffer ['rs'] [1]
-                    ==
-                    decoder_buffer ['rt'] [1]
-                )
-            elif (len (instr.opcode) == 3 and
-                instr.opcode == 'BNE'):
-                condition_output = not (
-                    decoder_buffer ['rs'] [1]
-                    ==
-                    decoder_buffer ['rt'] [1]
-                )
-            decoder_buffer = {}
-            if condition_output:
-                PC = npc + 4 * instr.immediate
-                print 'BNE/BEQ: PC changed to', PC
-            else:
-                # TODO
-                PC = npc
-
-            return {
-                'register_file': register_file,
-                'decoder_buffer': decoder_buffer,
-                'is_executor_stalled': is_executor_stalled,
-                'instr': instr,
-                'npc': npc,
-                'PC': PC,
-                }
-        else: 
-            # TODO: Should this be set to True here?
-            # is_executor_stalled = True
-            return {
-                'register_file': register_file,
-                'decoder_buffer': decoder_buffer,
-                'is_executor_stalled': is_executor_stalled,
-                }
-
-    def execute (self, decoder_buffer):
-        """
-        """
-        if decoder_buffer.get('is_mem_stalled', False): 
-            return {}
-        if not decoder_buffer.has_key ('instr'): 
-            return {}
-
-        instr = decoder_buffer ['instr']
-        executor_stalled = False
-
-        if instr.type == 'J':
-            return decoder_buffer
-        if instr.type == 'R':
-            return execute_R_instruction(decoder_buffer)
-        if instr.type == 'I':
-            return execute_I_instruction(decoder_buffer)
-
-    def doMemoryOperations (self):
-        # TODO: This is where the old code did the right thing. It set
-        # PC to NPC before this line and in the cases where 'instr'
-        # was not in executor_buffer, the new code would simply return
-        # {} and cup.
-        if self.reg_writer_stalled: return {}
-        if not self.executor_buffer.has_key ('instr'): 
-            print 'Should PC have been changed here??'
-            return {}
-        instr = self.executor_buffer['instr']
-
-        # Load : rt <- mem [imm (rs)]
-        if (len (instr.opcode) == 2 and
-            instr.opcode [0] in 'L'):
-            mem_val = self.data_memory [self.executor_buffer ['memaddr']]
-
-            # TODO: WHOA!!! register_file shouldn't be accessed in
-            # this stage.
-            self.register_file [instr.rt] = mem_val
-            self.executor_buffer = {}
-            return {'instr': instr,
-                    'rt': [instr.rt, mem_val]}
-
-        # Store: mem [imm (rs)] <- rt
-        elif (len (instr.opcode) == 2 and
-            instr.opcode [0] in 'S'):
-            self.data_memory [self.executor_buffer ['memaddr']] = (
-                self.executor_buffer ['rt'] [1]
-            )
-            self.executor_buffer = {}
-            return {'instr': instr}
-
-        temp = self.executor_buffer
-        self.executor_buffer = {}
-        return temp
-
-    def writeBackRegisters (self):
-        if not self.memory_buffer.has_key ('instr'): return {}
-        instr = self.memory_buffer ['instr']
-
-        # Mark the output registers clean.
-        if instr.type == 'R':
-            self.register_file.setClean (instr.rd)
-        elif instr.type == 'I':
-            self.register_file.setClean (instr.rt)
-
-        self.memory_buffer = {}
 
     def printBuffers (self):
         print "PC:", self.PC
@@ -375,7 +127,8 @@ class Processor (object):
     
     # TODO: Be careful. In reality, the stages are executed in reverse
     # order.
-    def get_stage_output(self, memory, register_file, pc, instr_count, 
+    @staticmethod
+    def get_stage_output(memory, register_file, pc, instr_count, 
                          stage_name):
         """Return the output buffer of stage given the initial conditions.
         
@@ -404,7 +157,7 @@ class Processor (object):
         if stage_name == 'decode':
             return decoder_buffer
 
-        mem_buffer = self.execute(decoder_buffer)
+        mem_buffer = ExecuteStage.execute(decoder_buffer)
         if stage_name == 'execute':
             return mem_buffer
 
