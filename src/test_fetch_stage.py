@@ -12,32 +12,37 @@ class FetchStageTest(unittest.TestCase):
         self.instruction_string = 'R ADD  R1 R2 R3'
         self.instr = Instruction.Instruction (self.instruction_string.strip().split())
         self.memory = Memory.Memory([self.instruction_string.strip().split()])
-        self.fetch_stage = fetch_stage.FetchStage()
+        self.fetch_input_buffer = FetchInputBuffer({
+            'PC': 0,
+            'instr_count': 0,
+            })
+        self.fetcher_buffer = FetcherBuffer({})
+        self.fetch_stage = fetch_stage.FetchStage(self.memory, 
+                                                  self.fetch_input_buffer, 
+                                                  self.fetcher_buffer)
     
     def tearDown(self):
         pass
     
-    def test_fetch_instruction(self):
-        # Decoder Stalled
-        fetch_input_buffer = FetchInputBuffer({
-            'memory': self.memory,
-            'PC': 0,
-            'instr_count': 0,
-            })
-        self.assertEqual(self.fetch_stage.fetch_instruction(fetch_input_buffer, 
-                                                          True),
+    def test_fetch_instruction_decoder_stall(self):
+        self.fetch_stage.fetch_instruction(True)
+        self.assertEqual(self.fetch_stage.fetcher_buffer,
                          FetcherBuffer({}))
 
-        fetcher_buffer = {'instr' : Instruction.Instruction (self.memory[0]),
-                          'npc' : 4}
-        actual_buffer = self.fetch_stage.fetch_instruction(fetch_input_buffer)
-        for key in fetcher_buffer.keys():
-            self.assertEqual(actual_buffer[key],
-                             fetcher_buffer[key])
+    def test_fetch_instruction_normal(self): 
+        ans_fetcher_buffer = FetcherBuffer({
+            'PC': 0,
+            'instr': Instruction.Instruction (self.memory[0]),
+            'npc': 4
+            })
+        self.fetch_stage.fetch_instruction()
+        self.assertEqual(self.fetch_stage.fetcher_buffer, ans_fetcher_buffer)
 
-        fetch_input_buffer['PC'] = 200000
-        self.assertEqual(self.fetch_stage.fetch_instruction(fetch_input_buffer),
-                         {})
+    def test_fetch_instruction_out_of_bound_pc(self): 
+        self.fetch_input_buffer['PC'] = 200000
+        self.fetch_stage.fetch_instruction(self.fetch_input_buffer)
+        self.assertEqual(self.fetch_stage.fetcher_buffer,
+                         FetcherBuffer())
 	
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(FetchStageTest)

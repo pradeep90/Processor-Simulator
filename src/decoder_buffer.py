@@ -18,5 +18,5 @@ class DecoderBuffer(StageBuffer):
     def __init__(self, input_dict = {}):
         """
         """
-        super(FetcherBuffer, self).__init__(input_dict)
+        super(DecoderBuffer, self).__init__(input_dict)
 

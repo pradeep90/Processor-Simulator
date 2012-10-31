@@ -3,19 +3,21 @@ from Memory import Memory
 from RegisterFile import RegisterFile
 from pprint import pprint
 from fetcher_buffer import FetcherBuffer
+from decoder_buffer import DecoderBuffer
 from fetch_stage import FetchStage
 
 class DecodeStage(object):
     """Simulator for the Decode stage of a MIPS pipeline.
     """
     
-    def __init__(self, ):
+    def __init__(self, fetcher_buffer, decoder_buffer, register_file):
+        """Set the fetcher_buffer and decoder_buffer for the stage.
         """
-        """
-        pass
+        self.fetcher_buffer = fetcher_buffer
+        self.decoder_buffer = decoder_buffer
+        self.register_file = register_file
         
-    @staticmethod
-    def decode_R_instruction(fetcher_buffer):
+    def decode_R_instruction(self, fetcher_buffer):
         """Return decoder_buffer given fetcher_buffer.
 
         R type: rd <- rs funct rt
@@ -24,8 +26,6 @@ class DecodeStage(object):
         them in the buffer.
 
         decoder_buffer contains:
-        + modified register_file
-        + next fetcher_buffer
         + instr
         + rs
         + rt
@@ -38,32 +38,27 @@ class DecodeStage(object):
           + instr
           + npc
         """
-        register_file = fetcher_buffer['register_file']
         instr = fetcher_buffer ['instr']
         npc = fetcher_buffer ['npc']
         is_decoder_stalled = False
 
-        if (register_file.isClean (instr.rs) and
-            register_file.isClean (instr.rt)):
+        if (self.register_file.isClean (instr.rs) and
+            self.register_file.isClean (instr.rt)):
 
             fetcher_buffer = {}
-            register_file.setDirty (instr.rd)
+            self.register_file.setDirty (instr.rd)
 
             return {
-                'register_file': register_file,
-                'fetcher_buffer': fetcher_buffer,
                 'is_decoder_stalled': is_decoder_stalled,
                 'instr': instr,
-                'rs': [instr.rs, register_file [instr.rs]],
-                'rt': [instr.rt, register_file [instr.rt]],
+                'rs': [instr.rs, self.register_file [instr.rs]],
+                'rt': [instr.rt, self.register_file [instr.rt]],
                 'npc': npc,
                 }
         else:
             is_decoder_stalled = True
-            register_file.setDirty (instr.rd)
+            self.register_file.setDirty (instr.rd)
             return {
-                'register_file': register_file,
-                'fetcher_buffer': fetcher_buffer,
                 'is_decoder_stalled': is_decoder_stalled,
             }
 
@@ -201,8 +196,7 @@ class DecodeStage(object):
             'PC': PC,
             }
 
-    @staticmethod
-    def decode_instruction (fetcher_buffer, is_executor_stalled = False):
+    def decode_instruction (self, is_executor_stalled = False):
         """Decode the instr in fetcher_buffer and read from registers.
 
         Check for possible branch. Compute branch target address, if
@@ -212,15 +206,13 @@ class DecodeStage(object):
 
         Return decoder_buffer.
         """
-        if is_executor_stalled: 
-            return {}
-        if fetcher_buffer.instr is None: 
-            return {}
+        if is_executor_stalled or self.fetcher_buffer.instr is None: 
+            self.decoder_buffer = DecoderBuffer({})
+            return
 
-        instr = fetcher_buffer['instr']
-        if instr.type == 'R':
-            return DecodeStage.decode_R_instruction(fetcher_buffer)
-        elif instr.type == 'I':
-            return DecodeStage.decode_I_instruction(fetcher_buffer)
-        elif instr.type == 'J':
-            return DecodeStage.decode_J_instruction(fetcher_buffer)
+        if self.fetcher_buffer.instr.type == 'R':
+            return self.decode_R_instruction()
+        elif self.fetcher_buffer.instr.type == 'I':
+            return self.decode_I_instruction()
+        elif self.fetcher_buffer.instr.type == 'J':
+            return self.decode_J_instruction()

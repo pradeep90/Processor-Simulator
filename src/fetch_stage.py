@@ -5,50 +5,35 @@ class FetchStage(object):
     """Simulator for Fetch stage of MIPS Processor.
     """
     
-    def __init__(self, ):
+    def __init__(self, memory, fetch_input_buffer, fetcher_buffer):
         """
+        TODO: Take in instr_count
         """
-        pass
+        self.memory = memory
+        self.fetch_input_buffer = fetch_input_buffer
+        self.fetcher_buffer = fetcher_buffer
         
-    @staticmethod
-    def fetch_instruction (fetch_input_buffer = None, 
-                           is_decoder_stalled = False):
+    def fetch_instruction (self, is_decoder_stalled = False):
         """Based on PC value, fetch instruction from memory.
 
         Update PC.
         Return fetcher_buffer for the next cycle.
 
-        Arguments:
-        - fetch_input_buffer: contains
-          + PC
-          + memory
-          + is_branch_reg_zero
-          + branch_target_pc
-          + register_file
-          + instr_count
-
-        TODO: Take in and pass on the register_file.
+        TODO: Update instr_count
         """
         if is_decoder_stalled:
-            return FetcherBuffer({})
+            self.fetcher_buffer = FetcherBuffer({})
+            return
+
         try:
-            memory = fetch_input_buffer['memory']
-            PC = fetch_input_buffer['PC']
-            instr_count = fetch_input_buffer['instr_count']
+            self.fetcher_buffer.instr = Instruction(
+                self.memory[self.fetch_input_buffer.PC])
+            self.fetcher_buffer.PC = self.fetch_input_buffer.PC
+            self.fetcher_buffer.npc = self.fetcher_buffer.PC + 4
+            print 'self.fetcher_buffer: ', self.fetcher_buffer
 
-            IR = memory [PC]
-
-            # Is the NPC even needed anymore?
-            # PC = NPC
-            NPC = PC + 4
-            print 'NPC changed to', NPC
-
+            # TODO
+            instr_count = self.fetch_input_buffer.instr_count
             instr_count += 1
-            return FetcherBuffer({
-                'instr': Instruction (IR),
-                'npc': NPC,
-                'PC': PC
-                })
         except IndexError:
-            # warn('IndexError in fetchInstruction')
             return {}

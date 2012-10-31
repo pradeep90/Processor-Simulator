@@ -6,10 +6,8 @@ class FetchInputBuffer(StageBuffer):
 
     arg_list = [
         'PC',
-        'memory',
         'is_branch_reg_zero',
         'branch_target_pc',
-        'register_file',
         'instr_count',
         ]
     

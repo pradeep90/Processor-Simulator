@@ -19,6 +19,8 @@
 *** DONE stage buffer
 *** DONE fetch input buffer
 *** DONE fetcher buffer
+*** TODO decoder_buffer
+    CLOCK: [2012-10-31 Wed 13:50]
 ** Isolate the stages and make them functional
    CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
    CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15

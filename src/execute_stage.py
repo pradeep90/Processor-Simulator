@@ -30,7 +30,6 @@ class ExecuteStage(object):
           + is_mem_stalled
         """
         instr = decoder_buffer['instr']
-        register_file = decoder_buffer['register_file']
         npc = decoder_buffer['npc']
         is_executor_stalled = False
 
@@ -44,7 +43,6 @@ class ExecuteStage(object):
                 )
             decoder_buffer = {}
             return {
-                'register_file': register_file,
                 'decoder_buffer': decoder_buffer,
                 'is_executor_stalled': is_executor_stalled,
                 'instr': instr,
