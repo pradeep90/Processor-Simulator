@@ -9,6 +9,7 @@ from RegisterFile import RegisterFile
 from pprint import pprint
 from fetcher_buffer import FetcherBuffer
 from decoder_buffer import DecoderBuffer
+from fetch_input_buffer import FetchInputBuffer
 from fetch_stage import FetchStage
 from decode_stage import DecodeStage
 from execute_stage import ExecuteStage
@@ -143,21 +144,22 @@ class Processor (object):
 
         TODO: Maybe just take the stages as input later.
         """
-        fetch_input_buffer = {
+        fetch_input_buffer = FetchInputBuffer({
             'PC': pc,
             'instr_count': instr_count,
-            }
-
-        fetch_stage = FetchStage(memory)
-        fetcher_buffer = fetch_stage.fetch_instruction(fetch_input_buffer)
+            })
+        fetcher_buffer = FetcherBuffer()
+        fetch_stage = FetchStage(memory, fetch_input_buffer, fetcher_buffer)
+        fetch_stage.fetch_instruction()
 
         if stage_name == 'fetch':
-            return fetcher_buffer
+            return fetch_stage.fetcher_buffer
 
-        fetcher_buffer.register_file = register_file
+        fetch_stage.fetcher_buffer.register_file = register_file
 
-        decode_stage = DecodeStage(fetcher_buffer, DecoderBuffer(), register_file)
-        decoder_buffer = decode_stage.decode_instruction(fetcher_buffer)
+        decode_stage = DecodeStage(fetch_stage.fetcher_buffer, 
+                                   DecoderBuffer(), register_file)
+        decoder_buffer = decode_stage.decode_instruction(fetch_stage.fetcher_buffer)
 
         if stage_name == 'decode':
             return decoder_buffer

@@ -17,7 +17,7 @@ class DecodeStage(object):
         self.decoder_buffer = decoder_buffer
         self.register_file = register_file
         
-    def decode_R_instruction(self, fetcher_buffer):
+    def decode_R_instruction(self):
         """Return decoder_buffer given fetcher_buffer.
 
         R type: rd <- rs funct rt
@@ -34,12 +34,11 @@ class DecodeStage(object):
 
         Arguments:
         - `fetcher_buffer`: contains
-          + register_file
           + instr
           + npc
         """
-        instr = fetcher_buffer ['instr']
-        npc = fetcher_buffer ['npc']
+        instr = self.fetcher_buffer.instr
+        npc = self.fetcher_buffer.npc
         is_decoder_stalled = False
 
         if (self.register_file.isClean (instr.rs) and
@@ -48,22 +47,21 @@ class DecodeStage(object):
             fetcher_buffer = {}
             self.register_file.setDirty (instr.rd)
 
-            return {
+            self.decoder_buffer.update({
                 'is_decoder_stalled': is_decoder_stalled,
                 'instr': instr,
                 'rs': [instr.rs, self.register_file [instr.rs]],
                 'rt': [instr.rt, self.register_file [instr.rt]],
                 'npc': npc,
-                }
+                })
         else:
             is_decoder_stalled = True
             self.register_file.setDirty (instr.rd)
-            return {
+            self.decoder_buffer.update({
                 'is_decoder_stalled': is_decoder_stalled,
-            }
+            })
 
-    @staticmethod
-    def decode_I_instruction(fetcher_buffer):
+    def decode_I_instruction(self):
         """Return decoder_buffer given fetcher_buffer.
 
         I type: rt <- rs funct imm
@@ -86,9 +84,8 @@ class DecodeStage(object):
           + instr
           + npc
         """
-        register_file = fetcher_buffer['register_file']
-        instr = fetcher_buffer ['instr']
-        npc = fetcher_buffer ['npc']
+        instr = fetcher_buffer.instr
+        npc = fetcher_buffer.npc
         is_decoder_stalled = False
 
         # I type: rt <- rs funct imm

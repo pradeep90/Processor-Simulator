@@ -30,3 +30,11 @@ class StageBuffer(object):
         else:
             return False
 
+    def update(self, given_dict):
+        """Update buffer attributes with those in given_dict.
+        
+        Arguments:
+        - `given_dict`:
+        """
+        self.__dict__.update(given_dict)
+
