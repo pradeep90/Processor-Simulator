@@ -10,6 +10,7 @@ from pprint import pprint
 from fetcher_buffer import FetcherBuffer
 from fetch_input_buffer import FetchInputBuffer
 from executer_buffer import ExecuterBuffer
+from decoder_buffer import DecoderBuffer
 
 class ExecuteStageTest(unittest.TestCase):
     def setUp(self):
@@ -34,71 +35,155 @@ class ExecuteStageTest(unittest.TestCase):
                                                         self.executer_buffer,
                                                         self.register_file)
     
-    # def test_execute_R_instruction(self): 
-    #     self.set_up_execute_stage('R ADD  R1 R2 R3')
+    def test_execute_R_instruction(self): 
+        self.register_file[1] = 3
+        self.register_file[2] = 7
+        self.set_up_execute_stage('R ADD  R1 R2 R3')
 
-    #     self.execute_stage.execute(True)
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': False,
+            'instr': self.instr,
+            'npc': self.decoder_buffer.npc,
+            'rd': [self.instr.rd, self.register_file[1] + self.register_file[2]],
+            })
 
-    #     executer_buffer = ExecuterBuffer({
-    #         'is_executer_stalled': False,
-    #         'instr': self.instr,
-    #         'npc': self.decoder_buffer.npc,
-    #         'rd': [self.instr.rd, self.register_file [self.instr.rd]],
-    #         })
-    #     self.execute_stage.execute_R_instruction()
-    #     self.assertEqual(self.execute_stage.executer_buffer, 
-    #                      mem_buffer,
-    #                      "operands in buffer")
+        self.execute_stage.execute_R_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, 
+                         DecoderBuffer())
 
-    #     decoder_buffer.pop('rs')
-    #     mem_buffer = {
-    #         'is_executer_stalled': True,
-    #         }
-    #     self.assertEqual(
-    #         execute_stage.ExecuteStage.execute_R_instruction(decoder_buffer),
-    #         mem_buffer,
-    #         "stall")
+    def test_execute_R_instruction_no_operands(self): 
+        self.register_file[1] = 3
+        self.register_file[2] = 7
+        self.set_up_execute_stage('R ADD  R1 R2 R3')
+        self.decoder_buffer.rs = None
 
-    def test_execute_I_instruction(self): 
-        # instruction_list = [
-        #     'I ADDI R1 R1 1',
-        #     'I LW  R2 R5 4',
-        #     'I BEQ  R2 R5 4',
-        # ]
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': True,
+            })
 
-        # rt_val_list = [
-        #     [1, 1],
-        #     5,
-        #     None,
-        # ]
-        # instruction_list = [instruction.strip().split() 
-        #                     for instruction in instruction_list]
-        # register_file = self.register_file
-        # memory = Memory.Memory(instruction_list)
-        # npc = 4
+        self.execute_stage.execute_R_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer,
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, self.decoder_buffer)
 
-        # register_file_list = [RegisterFile()] * len(instruction_list)
-        # mem_buffer_list = [
-        #     {
-        #         'register_file': register_file_list[i],
-        #         'decoder_buffer': {},
-        #         'is_executer_stalled': False,
-        #         'instr': Instruction.Instruction(memory[i * 4]),
-        #         'npc': npc + i * 4,
-        #         'rt': rt_val_list[i],
-        #         'memaddr': 4,
-        #     }
-        #     for i in xrange(len(instruction_list))]
+    def test_execute_I_instruction_ADDI_etc_no_operands(self): 
+        self.set_up_execute_stage('R ADD  R1 R2 R3')
+        self.decoder_buffer.rs = None
 
-        # for i in xrange(len(instruction_list)):
-        #     decoder_buffer = Processor.Processor.get_stage_output(
-        #         memory, register_file_list[i], i * 4, 0, 'decode')
-        #     actual_mem_buffer = execute_stage.ExecuteStage.execute_I_instruction(decoder_buffer)
-        #     pprint(actual_mem_buffer)
-        #     for key in actual_mem_buffer:
-        #         print key
-        #         self.assertEqual(actual_mem_buffer[key], mem_buffer_list[i][key])
-        pass
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': True,
+            })
+
+        self.execute_stage.execute_R_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer,
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, self.decoder_buffer)
+
+    def test_execute_I_instruction_ADDI(self): 
+        self.register_file[1] = 3
+        self.set_up_execute_stage('I ADDI R1 R1 1')
+
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': False,
+            'instr': self.instr,
+            'npc': self.decoder_buffer.npc,
+            'rt': [self.instr.rt, self.register_file[1] + 1],
+            })
+
+        self.execute_stage.execute_I_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, 
+                         DecoderBuffer())
+
+    def test_execute_I_instruction_LW(self): 
+        self.register_file[2] = 8
+        self.set_up_execute_stage('I LW  R2 R5 4')
+
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': False,
+            'instr': self.instr,
+            'npc': self.decoder_buffer.npc,
+            'rt': self.instr.rt,
+            'memaddr': 12,
+            })
+
+        self.execute_stage.execute_I_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, 
+                         DecoderBuffer())
+
+    def test_execute_I_instruction_STORE(self): 
+        self.register_file[2] = 8
+        self.set_up_execute_stage('I SW  R2 R5 4')
+
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': False,
+            'instr': self.instr,
+            'npc': self.decoder_buffer.npc,
+            'rt': [self.instr.rt, self.register_file [self.instr.rt]],
+            'memaddr': 12,
+            })
+
+        self.execute_stage.execute_I_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, 
+                         DecoderBuffer())
+
+    def test_execute_I_instruction_BEQ_missing_operands(self): 
+        self.register_file[2] = 8
+        self.set_up_execute_stage('I BEQ  R2 R5 4')
+
+        self.decoder_buffer.rs = None
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': True,
+            })
+
+        self.execute_stage.execute_I_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, 
+                         self.decoder_buffer)
+
+    def test_execute_I_instruction_BEQ_true(self): 
+        self.register_file[2] = 8
+        self.register_file[5] = 8
+        self.set_up_execute_stage('I BEQ  R2 R5 4')
+
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': False,
+            'instr': self.instr,
+            'npc': self.decoder_buffer.npc,
+            'PC': self.decoder_buffer.npc + 4 * 4,
+            })
+
+        self.execute_stage.execute_I_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, 
+                         DecoderBuffer())
+
+    def test_execute_I_instruction_BEQ_false(self): 
+        self.register_file[2] = 8
+        self.register_file[5] = 7
+        self.set_up_execute_stage('I BEQ  R2 R5 4')
+
+        executer_buffer = ExecuterBuffer({
+            'is_executer_stalled': False,
+            'instr': self.instr,
+            'npc': self.decoder_buffer.npc,
+            'PC': self.decoder_buffer.npc,
+            })
+
+        self.execute_stage.execute_I_instruction()
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         executer_buffer)
+        self.assertEqual(self.execute_stage.decoder_buffer, 
+                         DecoderBuffer())
 
     def test_execute(self): 
         self.set_up_execute_stage('R ADD  R1 R2 R3')
@@ -111,6 +196,8 @@ class ExecuteStageTest(unittest.TestCase):
         self.execute_stage.execute(True)
         self.assertEqual(self.execute_stage.executer_buffer, 
                          ExecuterBuffer())
+        self.assertEqual(self.execute_stage.decoder_buffer, 
+                         self.decoder_buffer)
 	
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(ExecuteStageTest)

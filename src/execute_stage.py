@@ -1,4 +1,5 @@
 from executer_buffer import ExecuterBuffer
+from decoder_buffer import DecoderBuffer
 
 class ExecuteStage(object):
     """Simulator for the Execute stage of a MIPS pipeline.
@@ -9,6 +10,8 @@ class ExecuteStage(object):
         """
         self.decoder_buffer = decoder_buffer
         self.executer_buffer = executer_buffer
+
+        # TODO: DO NOT access register_file in any way in this stage!
         self.register_file = register_file
 
     @staticmethod
@@ -58,30 +61,29 @@ class ExecuteStage(object):
         # Check if operands are in the buffer
         if (self.decoder_buffer.rs is not None and
             self.decoder_buffer.rt is not None):
-            self.register_file [instr.rd] = self.do_operation (
+
+            # TODO: THIS IS WRONG!!! Simply send the operation's
+            # value. No reading of register_file here.
+            self.register_file [instr.rd] = self.do_operation(
                 instr.opcode,
-                self.decoder_buffer ['rs'] [1],
-                self.decoder_buffer ['rt'] [1]
+                self.decoder_buffer.rs[1],
+                self.decoder_buffer.rt[1]
                 )
-            self.decoder_buffer = {}
-            return {
-                'decoder_buffer': self.decoder_buffer,
+            self.decoder_buffer = DecoderBuffer()
+            self.executer_buffer.update({
                 'is_executer_stalled': is_executer_stalled,
                 'instr': instr,
                 'npc': npc,
                 'rd': [instr.rd, self.register_file [instr.rd]],
-                }
+                })
         else:
             # Here, we should take care of operand fowarding
             is_executer_stalled = True
-            return {
-                'register_file': self.register_file,
-                'decoder_buffer': self.decoder_buffer,
+            self.executer_buffer.update({
                 'is_executer_stalled': is_executer_stalled,
-                }
+                })
         
-    @staticmethod
-    def execute_I_instruction(decoder_buffer):
+    def execute_I_instruction(self):
         """Execute the I instruction and update the register file.
 
         Return executer_buffer.
@@ -102,119 +104,116 @@ class ExecuteStage(object):
           + register_file
           + is_mem_stalled
         """
-        instr = decoder_buffer['instr']
-        register_file = decoder_buffer['register_file']
-        npc = decoder_buffer['npc']
+        instr = self.decoder_buffer.instr
+        npc = self.decoder_buffer.npc
         is_executer_stalled = False
 
         # Check if operands are in the buffer.
-        if (decoder_buffer.has_key ('rs') and
-            decoder_buffer.has_key ('immediate')):
+        if (self.decoder_buffer.rs is not None and
+            self.decoder_buffer.immediate is not None):
             # Immediate ALU operations
             if len (instr.opcode) == 4:
-                register_file [instr.rt] = self.do_operation (
+                self.register_file [instr.rt] = self.do_operation (
                     instr.opcode,
-                    decoder_buffer ['rs'] [1],
-                    decoder_buffer ['immediate']
+                    self.decoder_buffer ['rs'] [1],
+                    self.decoder_buffer ['immediate']
                 )
-                decoder_buffer = {}
-                return {
-                    'register_file': register_file,
-                    'decoder_buffer': decoder_buffer,
+                self.decoder_buffer = DecoderBuffer()
+                self.executer_buffer.update({
                     'is_executer_stalled': is_executer_stalled,
                     'instr': instr,
                     'npc': npc,
-                    'rt': [instr.rt, register_file [instr.rt]]
-                    }
+                    'rt': [instr.rt, self.register_file [instr.rt]]
+                    })
+                return
 
             # Load : rt <- mem [imm (rs)]
             if (len (instr.opcode) == 2 and
                 instr.opcode [0] in 'L'):
-                memaddr = (decoder_buffer ['rs'] [1]
+                memaddr = (self.decoder_buffer ['rs'] [1]
                            +
-                           decoder_buffer ['immediate'])
-                decoder_buffer = {}
-                return {
-                    'register_file': register_file,
-                    'decoder_buffer': decoder_buffer,
+                           self.decoder_buffer ['immediate'])
+                self.decoder_buffer = DecoderBuffer()
+
+                # TODO: Why is rt here not of the form 
+                # [instr.rt, self.register_file [instr.rt]] like the
+                # others?
+                self.executer_buffer.update({
                     'is_executer_stalled': is_executer_stalled,
                     'instr': instr,
                     'npc': npc,
                     'rt': instr.rt,
                     'memaddr': memaddr
-                    }
+                    })
+                return
 
             # Store: mem [imm (rs)] <- rt
             if (len (instr.opcode) == 2 and
                 instr.opcode [0] in 'S'):
-                memaddr = (decoder_buffer ['rs'] [1]
+                memaddr = (self.decoder_buffer ['rs'] [1]
                            +
-                           decoder_buffer ['immediate'])
-                decoder_buffer = {}
-                return {
-                    'register_file': register_file,
-                    'decoder_buffer': decoder_buffer,
+                           self.decoder_buffer ['immediate'])
+                self.decoder_buffer = DecoderBuffer()
+                self.executer_buffer.update({
                     'is_executer_stalled': is_executer_stalled,
                     'instr': instr,
                     'npc': npc,
-                    'rt': [instr.rt, register_file [instr.rt]],
+                    'rt': [instr.rt, self.register_file [instr.rt]],
                     'memaddr': memaddr,
-                    }
+                    })
+                return
 
         else:
             is_executer_stalled = True
-            return {
-                'register_file': register_file,
-                'decoder_buffer': decoder_buffer,
+            self.executer_buffer.update({
                 'is_executer_stalled': is_executer_stalled,
-                }
+                })
+            return
 
         # BEQ and BNE
-        if (decoder_buffer.has_key ('rs') and
-            decoder_buffer.has_key ('immediate') and
-            decoder_buffer.has_key ('rt')):
+        if (self.decoder_buffer.rs is not None and
+            self.decoder_buffer.immediate is not None and
+            self.decoder_buffer.rt is not None):
             condition_output = True
+
             if (len (instr.opcode) == 3 and
                 instr.opcode == 'BEQ'):
                 condition_output = (
-                    decoder_buffer ['rs'] [1]
+                    self.decoder_buffer ['rs'] [1]
                     ==
-                    decoder_buffer ['rt'] [1]
+                    self.decoder_buffer ['rt'] [1]
                 )
             elif (len (instr.opcode) == 3 and
                 instr.opcode == 'BNE'):
                 condition_output = not (
-                    decoder_buffer ['rs'] [1]
+                    self.decoder_buffer ['rs'] [1]
                     ==
-                    decoder_buffer ['rt'] [1]
+                    self.decoder_buffer ['rt'] [1]
                 )
-            decoder_buffer = {}
             if condition_output:
                 PC = npc + 4 * instr.immediate
                 print 'BNE/BEQ: PC changed to', PC
             else:
-                # TODO
+                # TODO: Should this be npc or npc - 4?
                 PC = npc
 
-            return {
-                'register_file': register_file,
-                'decoder_buffer': decoder_buffer,
+            self.decoder_buffer = DecoderBuffer()
+            self.executer_buffer.update({
                 'is_executer_stalled': is_executer_stalled,
                 'instr': instr,
                 'npc': npc,
                 'PC': PC,
-                }
+                })
+            return
         else: 
-            # TODO: Should this be set to True here?
-            # is_executer_stalled = True
-            return {
-                'register_file': register_file,
-                'decoder_buffer': decoder_buffer,
+            is_executer_stalled = True
+            self.executer_buffer.update({
                 'is_executer_stalled': is_executer_stalled,
-                }
+                })
+            return
 
     def execute (self, is_mem_stalled = False):
-        """
+        """Execute instruction.
         """
         if is_mem_stalled or self.decoder_buffer.instr is None: 
             self.executer_buffer = ExecuterBuffer()
@@ -226,5 +225,7 @@ class ExecuteStage(object):
             pass
         if self.decoder_buffer.instr.type == 'R':
             self.execute_R_instruction()
-        if instr.type == 'I':
+            return
+        if self.decoder_buffer.instr.type == 'I':
             self.execute_I_instruction()
+            return

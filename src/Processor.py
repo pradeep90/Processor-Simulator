@@ -13,6 +13,7 @@ from fetch_input_buffer import FetchInputBuffer
 from fetch_stage import FetchStage
 from decode_stage import DecodeStage
 from execute_stage import ExecuteStage
+from executer_buffer import ExecuterBuffer
 import pickle
 
 default_data_file_name =  'new-cycle-data.pickle'
@@ -28,11 +29,8 @@ class Processor (object):
     mem_stalled = False
     reg_writer_stalled = False
 
-    data_memory_key_fn = lambda: 0
-
     def __init__ (self, memory, start_address):
         self.memory= memory
-        self.data_memory = defaultdict (self.data_memory_key_fn)
         self.start_address = start_address
         self.register_file = RegisterFile ()
         self.PC = 0
@@ -139,7 +137,14 @@ class Processor (object):
         if stage_name == 'decode':
             return decode_stage.decoder_buffer
 
-        mem_buffer = ExecuteStage.execute(decoder_buffer)
+        execute_stage = ExecuteStage(decode_stage.decoder_buffer,
+                                     ExecuterBuffer(),
+                                     register_file)
+        execute_stage.execute()
+        if stage_name == 'execute':
+            return execute_stage.executer_buffer
+
+        # mem_buffer = 
         if stage_name == 'execute':
             return mem_buffer
 

@@ -52,7 +52,7 @@ class DecodeStageTest(unittest.TestCase):
         self.assertTrue(self.decode_stage.register_file.isDirty(self.instr.rd))
         self.assertEqual(self.decode_stage.fetcher_buffer, FetcherBuffer())
 
-    def test_decode_R_instruction_stall(self): 
+    def test_decode_R_instruction_dirty_reg(self): 
         self.set_up_decode_stage('R ADD  R1 R2 R3')
         self.register_file.setDirty(self.instr.rt)
         decoder_buffer = DecoderBuffer({
