@@ -91,19 +91,20 @@ class MemoryStageTest(unittest.TestCase):
                          ExecuterBuffer())
         self.assertEqual(self.data_memory[12], 174)
 
-    # TODO:
-    # def test_do_memory_operation_stall(self): 
-    #     self.set_up_memory_stage('I LW R2 R5 4')
+    def test_do_memory_operation_non_memory_operation(self): 
+        # Should pass forward the instr
+        self.set_up_memory_stage('R ADD  R1 R2 R3')
 
-    #     memory_buffer = MemoryBuffer({
-    #         'is_memory_stalled': True,
-    #         })
+        memory_buffer = MemoryBuffer({
+            'is_memory_stalled': False,
+            'instr': self.instr,
+            })
 
-    #     self.memory_stage.do_memory_operation()
-    #     self.assertEqual(self.memory_stage.memory_buffer, 
-    #                      memory_buffer)
-    #     self.assertEqual(self.memory_stage.executer_buffer, 
-    #                      self.executer_buffer)
+        self.memory_stage.do_memory_operation()
+        self.assertEqual(self.memory_stage.memory_buffer, 
+                         memory_buffer)
+        self.assertEqual(self.memory_stage.executer_buffer, 
+                         self.executer_buffer)
     
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(MemoryStageTest)

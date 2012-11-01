@@ -23,8 +23,10 @@
     CLOCK: [2012-10-31 Wed 13:50]--[2012-10-31 Wed 16:00] =>  2:10
 *** DONE executer_buffer
     CLOCK: [2012-11-01 Thu 12:10]--[2012-11-01 Thu 13:11] =>  1:01
-** TODO memory_stage
-   CLOCK: [2012-11-01 Thu 13:12]
+** DONE memory_stage
+   CLOCK: [2012-11-01 Thu 13:12]--[2012-11-01 Thu 14:07] =>  0:55
+** DONE write_back
+   CLOCK: [2012-11-01 Thu 14:07]--[2012-11-01 Thu 14:29] =>  0:22
 ** Isolate the stages and make them functional
    CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
    CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15

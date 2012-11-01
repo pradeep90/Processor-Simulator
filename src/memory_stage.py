@@ -57,8 +57,9 @@ class MemoryStage(object):
                 'is_memory_stalled': is_memory_stalled,
                 })
         else:
-            is_memory_stalled = True
-            print 'yo, boyz'
+            # Non-memory instructions
+            is_memory_stalled = False
             self.memory_buffer.update({
+                'instr': instr,
                 'is_memory_stalled': is_memory_stalled,
                 })

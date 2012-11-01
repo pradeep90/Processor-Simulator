@@ -1,20 +1,22 @@
 #!/usr/bin/env python
 
 from collections import defaultdict
-import sys
-from warnings import warn
-from Instruction import Instruction
-from Memory import Memory
-from RegisterFile import RegisterFile
-from pprint import pprint
-from fetcher_buffer import FetcherBuffer
 from decoder_buffer import DecoderBuffer
+from decode_stage import DecodeStage
+from executer_buffer import ExecuterBuffer
+from execute_stage import ExecuteStage
+from fetcher_buffer import FetcherBuffer
 from fetch_input_buffer import FetchInputBuffer
 from fetch_stage import FetchStage
-from decode_stage import DecodeStage
-from execute_stage import ExecuteStage
-from executer_buffer import ExecuterBuffer
+from Instruction import Instruction
+from memory_buffer import MemoryBuffer
+from Memory import Memory
+from memory_stage import MemoryStage
+from pprint import pprint
+from RegisterFile import RegisterFile
+from warnings import warn
 import pickle
+import sys
 
 default_data_file_name =  'new-cycle-data.pickle'
 
@@ -144,9 +146,16 @@ class Processor (object):
         if stage_name == 'execute':
             return execute_stage.executer_buffer
 
-        # mem_buffer = 
-        if stage_name == 'execute':
-            return mem_buffer
+        data_memory_key_fn = lambda: -1
+        data_memory = defaultdict (data_memory_key_fn)
+
+        memory_stage = MemoryStage(execute_stage.executer_buffer,
+                                   MemoryBuffer(),
+                                   data_memory)
+        memory_stage.do_memory_operation()
+
+        if stage_name == 'memory':
+            return memory_stage.memory_buffer
 
 
     def start(self, cycle_data_file_name = default_data_file_name):

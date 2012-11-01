@@ -1,15 +1,20 @@
+from memory_buffer import MemoryBuffer
+
 class WriteBackStage(object):
     """Simulator for the Memory stage of a MIPS pipeline.
     """
     
-    def __init__(self, ):
+    def __init__(self, memory_buffer, register_file):
+        """Set memory_buffer and register_file for WriteBackStage.
         """
-        """
-        pass
+        self.memory_buffer = memory_buffer
+        self.register_file = register_file
 
-    def writeBackRegisters (self):
-        if not self.memory_buffer.has_key ('instr'): return {}
-        instr = self.memory_buffer ['instr']
+    def write_back(self):
+        if self.memory_buffer.instr is None: 
+            return
+
+        instr = self.memory_buffer.instr
 
         # Mark the output registers clean.
         if instr.type == 'R':
@@ -17,4 +22,4 @@ class WriteBackStage(object):
         elif instr.type == 'I':
             self.register_file.setClean (instr.rt)
 
-        self.memory_buffer = {}
+        self.memory_buffer = MemoryBuffer()
