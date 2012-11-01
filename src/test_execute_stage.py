@@ -9,6 +9,7 @@ from RegisterFile import RegisterFile
 from pprint import pprint
 from fetcher_buffer import FetcherBuffer
 from fetch_input_buffer import FetchInputBuffer
+from executer_buffer import ExecuterBuffer
 
 class ExecuteStageTest(unittest.TestCase):
     def setUp(self):
@@ -16,35 +17,42 @@ class ExecuteStageTest(unittest.TestCase):
     
     def tearDown(self):
         pass
+
+    def set_up_execute_stage(self, instruction_string):
+        """Set up Execute Stage with the appropriate decoder_buffer, etc.
+        
+        Arguments:
+        - `instruction_string`:
+        """
+        self.instruction_string = instruction_string
+        self.instr = Instruction.Instruction (self.instruction_string.strip().split())
+        self.memory = Memory.Memory([self.instruction_string.strip().split()])
+        self.decoder_buffer = Processor.Processor.get_stage_output(
+            self.memory, self.register_file, 0, 0, 'decode')
+        self.executer_buffer = ExecuterBuffer()
+        self.execute_stage = execute_stage.ExecuteStage(self.decoder_buffer,
+                                                        self.executer_buffer,
+                                                        self.register_file)
     
     # def test_execute_R_instruction(self): 
-    #     instruction_string = 'R ADD  R1 R2 R3'
-    #     instr = Instruction.Instruction (instruction_string.strip().split())
-    #     register_file = self.register_file
-    #     npc = 4
+    #     self.set_up_execute_stage('R ADD  R1 R2 R3')
 
-    #     memory = Memory.Memory([instruction_string.strip().split()])
-    #     decoder_buffer = Processor.Processor.get_stage_output(
-    #         memory, register_file, 0, 0, 'decode')
+    #     self.execute_stage.execute(True)
 
-    #     mem_buffer = {
-    #         'register_file': register_file,
-    #         'decoder_buffer': {},
-    #         'is_executor_stalled': False,
-    #         'instr': instr,
-    #         'npc': npc,
-    #         'rd': [instr.rd, register_file [instr.rd]],
-    #         }
-    #     self.assertEqual(
-    #         execute_stage.ExecuteStage.execute_R_instruction(decoder_buffer), 
-    #         mem_buffer,
-    #         "operands in buffer")
+    #     executer_buffer = ExecuterBuffer({
+    #         'is_executer_stalled': False,
+    #         'instr': self.instr,
+    #         'npc': self.decoder_buffer.npc,
+    #         'rd': [self.instr.rd, self.register_file [self.instr.rd]],
+    #         })
+    #     self.execute_stage.execute_R_instruction()
+    #     self.assertEqual(self.execute_stage.executer_buffer, 
+    #                      mem_buffer,
+    #                      "operands in buffer")
 
     #     decoder_buffer.pop('rs')
     #     mem_buffer = {
-    #         'register_file': register_file,
-    #         'decoder_buffer': decoder_buffer,
-    #         'is_executor_stalled': True,
+    #         'is_executer_stalled': True,
     #         }
     #     self.assertEqual(
     #         execute_stage.ExecuteStage.execute_R_instruction(decoder_buffer),
@@ -74,7 +82,7 @@ class ExecuteStageTest(unittest.TestCase):
         #     {
         #         'register_file': register_file_list[i],
         #         'decoder_buffer': {},
-        #         'is_executor_stalled': False,
+        #         'is_executer_stalled': False,
         #         'instr': Instruction.Instruction(memory[i * 4]),
         #         'npc': npc + i * 4,
         #         'rt': rt_val_list[i],
@@ -92,24 +100,17 @@ class ExecuteStageTest(unittest.TestCase):
         #         self.assertEqual(actual_mem_buffer[key], mem_buffer_list[i][key])
         pass
 
-    # def test_execute(self): 
-    #     instruction_string = 'R ADD  R1 R2 R3'
-    #     instr = Instruction.Instruction (instruction_string.strip().split())
-    #     register_file = self.register_file
-    #     npc = 4
+    def test_execute(self): 
+        self.set_up_execute_stage('R ADD  R1 R2 R3')
 
-    #     decoder_buffer = {
-    #         'instr': instr,
-    #         'npc': npc,
-    #         'register_file': register_file,
-    #         'is_mem_stalled': True,
-    #     }
+        self.execute_stage.execute(True)
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         ExecuterBuffer())
 
-    #     self.assertEqual(execute_stage.ExecuteStage.execute(decoder_buffer), {})
-
-    #     decoder_buffer.pop('is_mem_stalled')
-    #     decoder_buffer.pop('instr')
-    #     self.assertEqual(execute_stage.ExecuteStage.execute(decoder_buffer), {})
+        self.decoder_buffer.instr = None
+        self.execute_stage.execute(True)
+        self.assertEqual(self.execute_stage.executer_buffer, 
+                         ExecuterBuffer())
 	
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(ExecuteStageTest)

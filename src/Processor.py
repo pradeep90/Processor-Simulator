@@ -20,11 +20,11 @@ default_data_file_name =  'new-cycle-data.pickle'
 class Processor (object):
     fetcher_buffer = FetcherBuffer()
     decoder_buffer = {}
-    executor_buffer = {}
+    executer_buffer = {}
     memory_buffer = {}
 
     decoder_stalled = False
-    executor_stalled = False
+    executer_stalled = False
     mem_stalled = False
     reg_writer_stalled = False
 
@@ -41,35 +41,11 @@ class Processor (object):
         self.cycle_count = 0
         self.instr_count= 0
 
-    @staticmethod
-    def do_operation (opcode, oper1, oper2):
-        """Return value of arithmetic expression `oper1 opcode oper2`.
-        """
-        oper_dict = {
-            'ADD' : ' +',
-            'ADDI': ' +',
-            'SUB' : ' -',
-            'MUL' : ' *',
-            'DIV' : ' /',
-            'AND' : ' &',
-            'ANDI': ' &',
-            'OR'  : ' |',
-            'ORI' : ' |',
-            'XOR' : ' ^',
-            'XORI': ' ^',
-            'NOR' : '~|',
-        }
-        opr = oper_dict [opcode]
-        expr = (opr [0] + '('
-                + str (oper1) + opr [1] + str (oper2)
-                + ')')
-        return eval (expr)
-
     def printBuffers (self):
         print "PC:", self.PC
         for buf in ['fetcher_buffer',
                     'decoder_buffer',
-                    'executor_buffer',
+                    'executer_buffer',
                     'memory_buffer']:
             print buf
             print self.__getattribute__ (buf)
@@ -84,10 +60,10 @@ class Processor (object):
         curr_data_dict = {
             'fetcher_buffer': self.fetcher_buffer,
             'decoder_buffer': self.decoder_buffer,
-            'executor_buffer': self.executor_buffer,
+            'executer_buffer': self.executer_buffer,
             'memory_buffer': self.memory_buffer,
             'decoder_stalled': self.decoder_stalled,
-            'executor_stalled': self.executor_stalled,
+            'executer_stalled': self.executer_stalled,
             'mem_stalled': self.mem_stalled,
             'reg_writer_stalled': self.reg_writer_stalled,
             'memory': self.memory,
@@ -155,14 +131,13 @@ class Processor (object):
         if stage_name == 'fetch':
             return fetch_stage.fetcher_buffer
 
-        fetch_stage.fetcher_buffer.register_file = register_file
-
         decode_stage = DecodeStage(fetch_stage.fetcher_buffer, 
-                                   DecoderBuffer(), register_file)
-        decoder_buffer = decode_stage.decode_instruction(fetch_stage.fetcher_buffer)
+                                   DecoderBuffer(), 
+                                   register_file)
+        decode_stage.decode_instruction()
 
         if stage_name == 'decode':
-            return decoder_buffer
+            return decode_stage.decoder_buffer
 
         mem_buffer = ExecuteStage.execute(decoder_buffer)
         if stage_name == 'execute':
@@ -194,7 +169,7 @@ class Processor (object):
 
             self.writeBackRegisters ()
             self.memory_buffer = self.doMemoryOperations () or self.memory_buffer
-            self.executor_buffer = self.execute () or self.executor_buffer
+            self.executer_buffer = self.execute () or self.executer_buffer
             self.decoder_buffer = self.decode_instruction () or self.decoder_buffer
 
             fetch_input_buffer = {
@@ -216,7 +191,7 @@ class Processor (object):
 
             self.more_instructions_to_fetch = (
                 self.memory_buffer or
-                self.executor_buffer or
+                self.executer_buffer or
                 self.decoder_buffer or
                 self.fetcher_buffer
             )

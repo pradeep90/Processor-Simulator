@@ -44,7 +44,7 @@ class DecodeStage(object):
         if (self.register_file.isClean (instr.rs) and
             self.register_file.isClean (instr.rt)):
 
-            fetcher_buffer = {}
+            self.fetcher_buffer = FetcherBuffer()
             self.register_file.setDirty (instr.rd)
 
             self.decoder_buffer.update({
@@ -70,8 +70,6 @@ class DecodeStage(object):
         I type branch: jump to imm depending on comparison of rs and rt
 
         decoder_buffer contains:
-        + modified register_file
-        + next fetcher_buffer
         + instr
         + rs
         + rt
@@ -80,62 +78,53 @@ class DecodeStage(object):
 
         Arguments:
         - `fetcher_buffer`: contains
-          + register_file
           + instr
           + npc
         """
-        instr = fetcher_buffer.instr
-        npc = fetcher_buffer.npc
+        instr = self.fetcher_buffer.instr
+        npc = self.fetcher_buffer.npc
         is_decoder_stalled = False
 
         # I type: rt <- rs funct imm
         # I type load: rt <- mem [imm (rs)]
         if (instr.type == 'I' and instr.opcode in [
                 'ADDI', 'ANDI', 'ORI', 'XORI', 'LB', 'LW']):
-            if register_file.isClean (instr.rs):
-                fetcher_buffer = {}
-                register_file.setDirty (instr.rt)
-                return {
-                    'register_file': register_file,
-                    'fetcher_buffer': fetcher_buffer,
+            if self.register_file.isClean (instr.rs):
+                self.fetcher_buffer = FetcherBuffer()
+                self.register_file.setDirty (instr.rt)
+                self.decoder_buffer.update({
                     'is_decoder_stalled': is_decoder_stalled,
                     'instr': instr,
-                    'rs': [instr.rs, register_file [instr.rs]],
+                    'rs': [instr.rs, self.register_file [instr.rs]],
                     'npc': npc,
                     'immediate': instr.immediate
-                    }
+                    })
             else:
                 is_decoder_stalled = True
-                register_file.setDirty (instr.rt)
-                return {
-                    'register_file': register_file,
-                    'fetcher_buffer': fetcher_buffer,
+                self.register_file.setDirty (instr.rt)
+                self.decoder_buffer.update({
                     'is_decoder_stalled': is_decoder_stalled,
-                    }
+                    })
 
         # I type store: mem [imm (rs)] <- rt
         # I type branch: jump to imm depending on comparison of rs and rt
         elif (instr.type == 'I' and instr.opcode in ['SB', 'BEQ', 'SW', 'BNE']):
-            if (register_file.isClean (instr.rs) and
-                register_file.isClean (instr.rt)):
-                fetcher_buffer = {}
-                return {
-                    'register_file': register_file,
-                    'fetcher_buffer': fetcher_buffer,
+            if (self.register_file.isClean (instr.rs) and
+                self.register_file.isClean (instr.rt)):
+                self.fetcher_buffer = FetcherBuffer()
+                self.decoder_buffer.update({
                     'is_decoder_stalled': is_decoder_stalled,
                     'instr': instr,
-                    'rs': [instr.rs, register_file [instr.rs]],
-                    'rt': [instr.rt, register_file [instr.rt]],
+                    'rs': [instr.rs, self.register_file [instr.rs]],
+                    'rt': [instr.rt, self.register_file [instr.rt]],
                     'npc': npc,
                     'immediate': instr.immediate
-                }
+                })
             else:
                 is_decoder_stalled = True
-                return {
-                    'register_file': register_file,
-                    'fetcher_buffer': fetcher_buffer,
+                self.decoder_buffer.update({
                     'is_decoder_stalled': is_decoder_stalled,
-                }
+                })
         
     @staticmethod
     def get_jump_address(npc, instr):
@@ -155,45 +144,36 @@ class DecodeStage(object):
         jump_addr = int (pc_msb + imm, 2)
         return jump_addr
         
-    @staticmethod
-    def decode_J_instruction(fetcher_buffer):
+    def decode_J_instruction(self):
         """Return decoder_buffer given fetcher_buffer.
 
         J type instruction
 
         decoder_buffer contains:
-        + register_file
-        + next fetcher_buffer
         + instr
         + npc
         + is_decoder_stalled
 
         Arguments:
         - `fetcher_buffer`: contains
-          + register_file
           + instr
           + npc
         """
-        register_file = fetcher_buffer['register_file']
-        instr = fetcher_buffer ['instr']
-        npc = fetcher_buffer ['npc']
+        instr = self.fetcher_buffer.instr
+        npc = self.fetcher_buffer.npc
         is_decoder_stalled = False
 
-        fetcher_buffer = {}
-        PC = DecodeStage.get_jump_address(npc, instr)
-        print 'npc: ', npc
-        print 'jump_addr: ', PC
+        self.fetcher_buffer = FetcherBuffer()
+        PC = self.get_jump_address(npc, instr)
 
-        return {
-            'register_file': register_file,
-            'fetcher_buffer': fetcher_buffer,
+        self.decoder_buffer.update({
             'is_decoder_stalled': is_decoder_stalled,
             'instr': instr,
             'npc': npc,
             'PC': PC,
-            }
+            })
 
-    def decode_instruction (self, is_executor_stalled = False):
+    def decode_instruction (self, is_executer_stalled = False):
         """Decode the instr in fetcher_buffer and read from registers.
 
         Check for possible branch. Compute branch target address, if
@@ -203,13 +183,13 @@ class DecodeStage(object):
 
         Return decoder_buffer.
         """
-        if is_executor_stalled or self.fetcher_buffer.instr is None: 
+        if is_executer_stalled or self.fetcher_buffer.instr is None: 
             self.decoder_buffer = DecoderBuffer({})
             return
 
         if self.fetcher_buffer.instr.type == 'R':
-            return self.decode_R_instruction()
+            self.decode_R_instruction()
         elif self.fetcher_buffer.instr.type == 'I':
-            return self.decode_I_instruction()
+            self.decode_I_instruction()
         elif self.fetcher_buffer.instr.type == 'J':
-            return self.decode_J_instruction()
+            self.decode_J_instruction()
