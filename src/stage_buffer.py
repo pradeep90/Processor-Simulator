@@ -12,7 +12,12 @@ class StageBuffer(object):
 
         for key in input_dict:
             self[key] = input_dict[key]
-        
+
+    def is_empty(self, ):
+        """Return True iff all attributes of the Buffer are None.
+        """
+        return all(self.__getattribute__(k) == None for k in self.__dict__)
+
     def __getitem__ (self, key):
         return self.__getattribute__(key)
 

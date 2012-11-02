@@ -30,10 +30,7 @@ class FetchStage(object):
                 self.memory[self.fetch_input_buffer.PC])
             self.fetcher_buffer.PC = self.fetch_input_buffer.PC
             self.fetcher_buffer.npc = self.fetcher_buffer.PC + 4
-            print 'self.fetcher_buffer: ', self.fetcher_buffer
-
-            # TODO
-            instr_count = self.fetch_input_buffer.instr_count
-            instr_count += 1
+            self.fetch_input_buffer.PC = self.fetcher_buffer.npc
+            self.fetch_input_buffer.instr_count += 1
         except IndexError:
-            return {}
+            self.fetcher_buffer = FetcherBuffer()

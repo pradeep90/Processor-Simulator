@@ -40,6 +40,11 @@ class StageBufferTest(unittest.TestCase):
         
         f3 = stage_buffer.StageBuffer(self.input_dict)
         self.assertEqual(f3, self.stage_buffer)
+
+    def test_is_empty(self): 
+        self.assertFalse(self.stage_buffer.is_empty())
+        empty_stage_buffer = stage_buffer.StageBuffer({})
+        self.assertTrue(empty_stage_buffer.is_empty())
 	
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(StageBufferTest)

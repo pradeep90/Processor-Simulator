@@ -44,6 +44,17 @@ class ProcessorTest(unittest.TestCase):
         self.register_file = RegisterFile()
         self.processor = Processor.Processor(self.memory, 0)
 
+    def test_execute_one_cycle(self): 
+        self.processor.execute_one_cycle()
+        print self.register_file
+        self.processor.print_buffers()
+
+    def test_are_instructions_in_flight(self): 
+        # self.assertFalse(self.processor.are_instructions_in_flight())
+        self.assertFalse(self.processor.are_instructions_in_flight())
+        self.processor.execute_one_cycle()
+        self.assertTrue(self.processor.are_instructions_in_flight())
+
     def tearDown(self):
         pass
 

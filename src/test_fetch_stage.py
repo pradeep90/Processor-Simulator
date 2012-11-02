@@ -35,14 +35,23 @@ class FetchStageTest(unittest.TestCase):
             'instr': Instruction.Instruction (self.memory[0]),
             'npc': 4
             })
+        ans_fetch_input_buffer = FetchInputBuffer({
+            'PC': 4,
+            'instr_count': 1,
+            })
         self.fetch_stage.fetch_instruction()
         self.assertEqual(self.fetch_stage.fetcher_buffer, ans_fetcher_buffer)
+        self.assertEqual(self.fetch_stage.fetch_input_buffer, ans_fetch_input_buffer)
 
     def test_fetch_instruction_out_of_bound_pc(self): 
-        self.fetch_input_buffer['PC'] = 200000
-        self.fetch_stage.fetch_instruction(self.fetch_input_buffer)
+        self.fetch_stage.fetcher_buffer = FetcherBuffer()
+        self.fetch_stage.fetcher_buffer.PC = 707
+
+        self.fetch_input_buffer.PC = 200000
+        self.fetch_stage.fetch_instruction()
         self.assertEqual(self.fetch_stage.fetcher_buffer,
-                         FetcherBuffer())
+                         FetcherBuffer(),
+                         "FetcherBuffer should become empty on out of bound PC.")
 	
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(FetchStageTest)

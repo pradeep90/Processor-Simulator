@@ -149,6 +149,8 @@ class DecodeStage(object):
 
         J type instruction
 
+        TODO: This is only for 'J' instructions. We haven't implemented 'JAL' yet.
+
         decoder_buffer contains:
         + instr
         + npc

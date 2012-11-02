@@ -10,6 +10,7 @@ class DecoderBuffer(StageBuffer):
         'npc',
         'rs',
         'rt',
+        'PC',
         ]
     
     def __init__(self, input_dict = {}):
