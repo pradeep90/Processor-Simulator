@@ -140,8 +140,7 @@ class Processor (object):
             return decode_stage.decoder_buffer
 
         execute_stage = ExecuteStage(decode_stage.decoder_buffer,
-                                     ExecuterBuffer(),
-                                     register_file)
+                                     ExecuterBuffer())
         execute_stage.execute()
         if stage_name == 'execute':
             return execute_stage.executer_buffer
@@ -157,11 +156,42 @@ class Processor (object):
         if stage_name == 'memory':
             return memory_stage.memory_buffer
 
+    def execute_one_cycle(self, ):
+        """Execute one cycle of the Processor.
+        """
+        self.writeBackRegisters ()
+        self.memory_buffer = self.doMemoryOperations () or self.memory_buffer
+        self.executer_buffer = self.execute () or self.executer_buffer
+        self.decoder_buffer = self.decode_instruction () or self.decoder_buffer
+        
+        fetch_input_buffer = {
+            'PC': self.PC,
+            'memory': self.memory,
+            'is_decoder_stalled': self.decoder_stalled,
+            'instr_count': self.instr_count,
+            }
+        gen_fetcher_buffer = self.fetch_instruction (fetch_input_buffer) or self.fetcher_buffer
+        # self.fetcher_buffer = self.fetch_instruction (fetch_input_buffer) or self.fetcher_buffer
+        self.fetcher_buffer = self.fetchInstruction() or self.fetcher_buffer
+        
+        if gen_fetcher_buffer != self.fetcher_buffer:
+            print 'gen_fetcher_buffer'
+            pprint(gen_fetcher_buffer)
+            print 'self.fetcher_buffer'
+            pprint(self.fetcher_buffer)
+            
+            
+            self.more_instructions_to_fetch = (
+                self.memory_buffer or
+                self.executer_buffer or
+                self.decoder_buffer or
+                self.fetcher_buffer
+                )
 
     def start(self, cycle_data_file_name = default_data_file_name):
         """Start execution of instructions from the start_address.
         """
-        self.instruction_addres = self.start_address
+        self.instruction_address = self.start_address
         self.more_instructions_to_fetch = True
 
         # 1-based list of stuff generated at the end of each cycle.

@@ -13,28 +13,32 @@
 *** DONE decode J
     CLOCK: [2012-10-27 Sat 14:17]--[2012-10-27 Sat 14:58] =>  0:41
 *** DONE decode
-** DONE Make Buffer classes 
-   CLOCK: [2012-10-29 Mon 14:58]--[2012-10-29 Mon 16:00] =>  1:02
-*** DONE stage buffer
-*** DONE fetch input buffer
-*** DONE fetcher buffer
-*** DONE decoder_buffer
-    CLOCK: [2012-11-01 Thu 10:03]--[2012-11-01 Thu 10:25] =>  0:22
-    CLOCK: [2012-10-31 Wed 13:50]--[2012-10-31 Wed 16:00] =>  2:10
-*** DONE executer_buffer
-    CLOCK: [2012-11-01 Thu 12:10]--[2012-11-01 Thu 13:11] =>  1:01
-** DONE memory_stage
-   CLOCK: [2012-11-01 Thu 13:12]--[2012-11-01 Thu 14:07] =>  0:55
-** DONE write_back
-   CLOCK: [2012-11-01 Thu 14:07]--[2012-11-01 Thu 14:29] =>  0:22
-** Isolate the stages and make them functional
-   CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
-   CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15
-*** DONE Make a fetch stage and decode stage class.
-    CLOCK: [2012-10-29 Mon 16:00]--[2012-10-29 Mon 16:27] =>  0:27
-*** DONE Make an execute stage
-    CLOCK: [2012-10-29 Mon 16:27]--[2012-10-29 Mon 16:52] =>  0:25
+** TODO execute_one_cycle
+   CLOCK: [2012-11-02 Fri 11:41]
+   CLOCK: [2012-11-02 Fri 11:29]--[2012-11-02 Fri 11:32] =>  0:03
+** DONE Remove accesses to register_file in execute stage
+   CLOCK: [2012-11-02 Fri 11:33]--[2012-11-02 Fri 11:40] =>  0:07
+* DONE Make Buffer classes 
+  CLOCK: [2012-10-29 Mon 14:58]--[2012-10-29 Mon 16:00] =>  1:02
+** DONE stage buffer
+** DONE fetch input buffer
+** DONE fetcher buffer
+** DONE decoder_buffer
+   CLOCK: [2012-11-01 Thu 10:03]--[2012-11-01 Thu 10:25] =>  0:22
+   CLOCK: [2012-10-31 Wed 13:50]--[2012-10-31 Wed 16:00] =>  2:10
+** DONE executer_buffer
+   CLOCK: [2012-11-01 Thu 12:10]--[2012-11-01 Thu 13:11] =>  1:01
+* DONE memory_stage
+  CLOCK: [2012-11-01 Thu 13:12]--[2012-11-01 Thu 14:07] =>  0:55
+* DONE write_back
+  CLOCK: [2012-11-01 Thu 14:07]--[2012-11-01 Thu 14:29] =>  0:22
+* DONE Isolate the stages and make them functional
+  CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
+  CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15
+** DONE Make a fetch stage and decode stage class.
+   CLOCK: [2012-10-29 Mon 16:00]--[2012-10-29 Mon 16:27] =>  0:27
+** DONE Make an execute stage
+   CLOCK: [2012-10-29 Mon 16:27]--[2012-10-29 Mon 16:52] =>  0:25
 * Memory
 ** DONE Refactoring - docstrings + unit tests
    CLOCK: [2012-10-20 Sat 19:09]--[2012-10-20 Sat 19:33] =>  0:24
-** Instruction memory, methinks

@@ -32,8 +32,7 @@ class ExecuteStageTest(unittest.TestCase):
             self.memory, self.register_file, 0, 0, 'decode')
         self.executer_buffer = ExecuterBuffer()
         self.execute_stage = execute_stage.ExecuteStage(self.decoder_buffer,
-                                                        self.executer_buffer,
-                                                        self.register_file)
+                                                        self.executer_buffer)
     
     def test_execute_R_instruction(self): 
         self.register_file[1] = 3
