@@ -7,9 +7,10 @@ class ExecuterBuffer(StageBuffer):
     arg_list = [
         'instr',
         'is_executer_stalled',
-        'memaddr (optional)',
+        'memaddr',
         'npc',
         'rt',
+        'rd',
         ]
     
     def __init__(self, input_dict = {}):

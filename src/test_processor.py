@@ -12,35 +12,20 @@ from fetch_input_buffer import FetchInputBuffer
 class ProcessorTest(unittest.TestCase):
     
     def setUp(self):
-        
-        hex_instruction_list = [
-            '00001020',                   # I instruction
-            '00011820',
-            '00432020',
-            '00A12822',
-            '00031025',                   # R instruction
-            '00041825',
-            'AC860000',
-            '20C60001',
-            '1005000A',
-            '08000002', 
+        instruction_list = [
+            'I ADDI R1 R1 1',
+            'I ADDI R2 R2 2',
+            'I ADDI R5 R5 89',
+            'I BEQ  R2 R5 4',
+            'R ADD  R1 R2 R3',
+            'R ADD  R2 R0 R1',
+            'R ADD  R3 R0 R2',
+            'J J    3',
+            'I ADDI R9 R9 999',
             ]
-
-        # Actual Code:
-        # I ADDI R1 R1 1
-        # I ADDI R2 R2 2
-        # I ADDI R5 R5 89
-        # I BEQ  R2 R5 4
-        # R ADD  R1 R2 R3
-        # R ADD  R2 R0 R1
-        # R ADD  R3 R0 R2
-        # J J    3
-        # I ADDI R9 R9 999
-        
-        bin_instruction_list = [
-            Memory.Memory.get_bin_from_hex_instruction(instruction) 
-            for instruction in hex_instruction_list]
-        self.memory = Memory.Memory(bin_instruction_list)
+        instruction_list = [instruction_string.split()
+                            for instruction_string in instruction_list]
+        self.memory = Memory.Memory(instruction_list)
         self.register_file = RegisterFile()
         self.processor = Processor.Processor(self.memory, 0)
 
@@ -50,10 +35,14 @@ class ProcessorTest(unittest.TestCase):
         self.processor.print_buffers()
 
     def test_are_instructions_in_flight(self): 
-        # self.assertFalse(self.processor.are_instructions_in_flight())
         self.assertFalse(self.processor.are_instructions_in_flight())
         self.processor.execute_one_cycle()
         self.assertTrue(self.processor.are_instructions_in_flight())
+
+    def test_execute_cycles(self): 
+        self.processor.execute_cycles(1)
+        print self.register_file
+        self.processor.print_buffers()
 
     def tearDown(self):
         pass

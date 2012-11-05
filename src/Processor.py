@@ -66,18 +66,22 @@ class Processor (object):
         print self.fetch_stage.fetch_input_buffer
         print 'fetch_stage.fetcher_buffer:'
         print self.fetch_stage.fetcher_buffer
+        print
         print 'decode_stage.fetcher_buffer:'
         print self.decode_stage.fetcher_buffer
         print 'decode_stage.decoder_buffer:'
         print self.decode_stage.decoder_buffer
+        print
         print 'execute_stage.decoder_buffer:'
         print self.execute_stage.decoder_buffer
         print 'execute_stage.executer_buffer:'
         print self.execute_stage.executer_buffer
+        print
         print 'memory_stage.executer_buffer:'
         print self.memory_stage.executer_buffer
         print 'memory_stage.memory_buffer:'
         print self.memory_stage.memory_buffer
+        print
         print 'write_back_stage.memory_buffer:'
         print self.write_back_stage.memory_buffer
 
@@ -216,18 +220,16 @@ class Processor (object):
             # case of a jump.
             self.fetch_stage.fetch_input_buffer.PC = self.decode_stage.decoder_buffer.PC
         
-    # TODO:
     def execute_cycles(self, num_cycles):
-        """Execute num_cycles cycles of the Processor (if possiblef.)
+        """Execute num_cycles cycles of the Processor (if possible).
 
         Arguments:
         - `num_cycles`:
         """
         cycle_count = 0
-        while self.execute_one_cycle() and cycle_count < num_cycles:
+        while cycle_count < num_cycles:
+            self.execute_one_cycle()
             cycle_count += 1
-            continue
-
 
     def start(self, cycle_data_file_name = default_data_file_name):
         """Start execution of instructions from the start_address.

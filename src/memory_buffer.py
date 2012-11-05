@@ -7,6 +7,7 @@ class MemoryBuffer(StageBuffer):
     arg_list = [
         'instr',
         'rt',
+        'rd',
         ]
     
     def __init__(self, input_dict = {}):

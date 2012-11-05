@@ -49,6 +49,9 @@ class WriteBackStageTest(unittest.TestCase):
         self.write_back_stage.write_back()
         self.assertEqual(self.write_back_stage.memory_buffer, 
                          MemoryBuffer())       
+        self.assertEqual(
+            self.write_back_stage.register_file[self.instr.rd], 
+                self.memory_buffer.rd[1])
         self.assertTrue(self.register_file.isClean(self.instr.rd))
 
     def test_write_back_I(self): 

@@ -98,6 +98,7 @@ class MemoryStageTest(unittest.TestCase):
         memory_buffer = MemoryBuffer({
             'is_memory_stalled': False,
             'instr': self.instr,
+            'rd': [3, 0],
             })
 
         self.memory_stage.do_memory_operation()
