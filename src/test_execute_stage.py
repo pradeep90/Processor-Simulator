@@ -40,13 +40,14 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('R ADD  R1 R2 R3')
 
         executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': False,
             'instr': self.instr,
             'npc': self.decoder_buffer.npc,
             'rd': [self.instr.rd, self.register_file[1] + self.register_file[2]],
             })
 
         self.execute_stage.execute_R_instruction()
+
+        self.assertFalse(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer, 
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, 
@@ -58,11 +59,11 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('R ADD  R1 R2 R3')
         self.decoder_buffer.rs = None
 
-        executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': True,
-            })
+        executer_buffer = ExecuterBuffer()
 
         self.execute_stage.execute_R_instruction()
+
+        self.assertTrue(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer,
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, self.decoder_buffer)
@@ -71,11 +72,11 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('R ADD  R1 R2 R3')
         self.decoder_buffer.rs = None
 
-        executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': True,
-            })
+        executer_buffer = ExecuterBuffer()
 
-        self.execute_stage.execute_R_instruction()
+        self.execute_stage.execute_I_instruction()
+
+        self.assertTrue(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer,
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, self.decoder_buffer)
@@ -85,13 +86,14 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('I ADDI R1 R1 1')
 
         executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': False,
             'instr': self.instr,
             'npc': self.decoder_buffer.npc,
             'rt': [self.instr.rt, self.register_file[1] + 1],
             })
 
         self.execute_stage.execute_I_instruction()
+
+        self.assertFalse(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer, 
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, 
@@ -102,7 +104,6 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('I LW  R2 R5 4')
 
         executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': False,
             'instr': self.instr,
             'npc': self.decoder_buffer.npc,
             'rt': self.instr.rt,
@@ -110,6 +111,8 @@ class ExecuteStageTest(unittest.TestCase):
             })
 
         self.execute_stage.execute_I_instruction()
+
+        self.assertFalse(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer, 
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, 
@@ -120,7 +123,6 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('I SW  R2 R5 4')
 
         executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': False,
             'instr': self.instr,
             'npc': self.decoder_buffer.npc,
             'rt': [self.instr.rt, self.register_file [self.instr.rt]],
@@ -128,6 +130,8 @@ class ExecuteStageTest(unittest.TestCase):
             })
 
         self.execute_stage.execute_I_instruction()
+
+        self.assertFalse(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer, 
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, 
@@ -138,11 +142,11 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('I BEQ  R2 R5 4')
 
         self.decoder_buffer.rs = None
-        executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': True,
-            })
+        executer_buffer = ExecuterBuffer()
 
         self.execute_stage.execute_I_instruction()
+        
+        self.assertTrue(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer, 
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, 
@@ -154,13 +158,14 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('I BEQ  R2 R5 4')
 
         executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': False,
             'instr': self.instr,
             'npc': self.decoder_buffer.npc,
             'PC': self.decoder_buffer.npc + 4 * 4,
             })
 
         self.execute_stage.execute_I_instruction()
+
+        self.assertFalse(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer, 
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, 
@@ -172,13 +177,13 @@ class ExecuteStageTest(unittest.TestCase):
         self.set_up_execute_stage('I BEQ  R2 R5 4')
 
         executer_buffer = ExecuterBuffer({
-            'is_executer_stalled': False,
             'instr': self.instr,
             'npc': self.decoder_buffer.npc,
             'PC': self.decoder_buffer.npc,
             })
 
         self.execute_stage.execute_I_instruction()
+        self.assertFalse(self.execute_stage.is_stalled)
         self.assertEqual(self.execute_stage.executer_buffer, 
                          executer_buffer)
         self.assertEqual(self.execute_stage.decoder_buffer, 

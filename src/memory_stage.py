@@ -4,6 +4,8 @@ from executer_buffer import ExecuterBuffer
 class MemoryStage(object):
     """Simulator for the Memory stage of a MIPS pipeline.
     """
+
+    is_stalled = False
     
     def __init__(self, executer_buffer, memory_buffer, data_memory):
         """Set the executer_buffer and memory_buffer for the Memory Stage.
@@ -27,7 +29,7 @@ class MemoryStage(object):
             self.memory_buffer = MemoryBuffer()
             return
 
-        is_memory_stalled = False
+        self.is_stalled = False
         instr = self.executer_buffer.instr
 
         # Load : rt <- mem [imm (rs)]
@@ -36,14 +38,9 @@ class MemoryStage(object):
 
             mem_val = self.data_memory [self.executer_buffer.memaddr]
 
-            # TODO: WHOA!!! register_file shouldn't be accessed in
-            # this stage.
-            # self.register_file [instr.rt] = mem_val
-
             self.executer_buffer = ExecuterBuffer()
             self.memory_buffer.update({
                 'instr': instr,
-                'is_memory_stalled': is_memory_stalled,
                 'rt': [instr.rt, mem_val]
                 })
         # Store: mem [imm (rs)] <- rt
@@ -54,13 +51,11 @@ class MemoryStage(object):
             self.executer_buffer = ExecuterBuffer()
             self.memory_buffer.update({
                 'instr': instr,
-                'is_memory_stalled': is_memory_stalled,
                 })
         else:
             # Non-memory instructions
-            is_memory_stalled = False
+            self.is_stalled = False
             self.memory_buffer.update({
                 'instr': instr,
                 'rd': self.executer_buffer.rd,
-                'is_memory_stalled': is_memory_stalled,
                 })

@@ -4,6 +4,8 @@ from decoder_buffer import DecoderBuffer
 class ExecuteStage(object):
     """Simulator for the Execute stage of a MIPS pipeline.
     """
+
+    is_stalled = False
     
     def __init__(self, decoder_buffer, executer_buffer):
         """Set the decoder buffer and executer buffer for the Execute Stage.
@@ -40,13 +42,12 @@ class ExecuteStage(object):
         """
         instr = self.decoder_buffer.instr
         npc = self.decoder_buffer.npc
-        is_executer_stalled = False
+        self.is_stalled = False
 
         # Check if operands are in the buffer
         if (self.decoder_buffer.rs is not None and
             self.decoder_buffer.rt is not None):
             self.executer_buffer.update({
-                'is_executer_stalled': is_executer_stalled,
                 'instr': instr,
                 'npc': npc,
                 'rd': [instr.rd, self.do_operation(instr.opcode,
@@ -56,17 +57,14 @@ class ExecuteStage(object):
             self.decoder_buffer = DecoderBuffer()
         else:
             # Here, we should take care of operand fowarding
-            is_executer_stalled = True
-            self.executer_buffer.update({
-                'is_executer_stalled': is_executer_stalled,
-                })
+            self.is_stalled = True
         
     def execute_I_instruction(self):
         """Execute the I instruction and update executer_buffer and decoder_buffer.
         """
         instr = self.decoder_buffer.instr
         npc = self.decoder_buffer.npc
-        is_executer_stalled = False
+        self.is_stalled = False
 
         # Check if operands are in the buffer.
         if (self.decoder_buffer.rs is not None and
@@ -74,7 +72,6 @@ class ExecuteStage(object):
             # Immediate ALU operations
             if len (instr.opcode) == 4:
                 self.executer_buffer.update({
-                    'is_executer_stalled': is_executer_stalled,
                     'instr': instr,
                     'npc': npc,
                     'rt': [instr.rt, 
@@ -97,7 +94,6 @@ class ExecuteStage(object):
                 # [instr.rt, register value] like the
                 # others?
                 self.executer_buffer.update({
-                    'is_executer_stalled': is_executer_stalled,
                     'instr': instr,
                     'npc': npc,
                     'rt': instr.rt,
@@ -112,7 +108,6 @@ class ExecuteStage(object):
                            +
                            self.decoder_buffer ['immediate'])
                 self.executer_buffer.update({
-                    'is_executer_stalled': is_executer_stalled,
                     'instr': instr,
                     'npc': npc,
                     'rt': self.decoder_buffer.rt,
@@ -122,10 +117,7 @@ class ExecuteStage(object):
                 return
 
         else:
-            is_executer_stalled = True
-            self.executer_buffer.update({
-                'is_executer_stalled': is_executer_stalled,
-                })
+            self.is_stalled = True
             return
 
         # BEQ and BNE
@@ -157,17 +149,13 @@ class ExecuteStage(object):
 
             self.decoder_buffer = DecoderBuffer()
             self.executer_buffer.update({
-                'is_executer_stalled': is_executer_stalled,
                 'instr': instr,
                 'npc': npc,
                 'PC': PC,
                 })
             return
         else: 
-            is_executer_stalled = True
-            self.executer_buffer.update({
-                'is_executer_stalled': is_executer_stalled,
-                })
+            self.is_stalled = True
             return
 
     def execute (self, is_mem_stalled = False):

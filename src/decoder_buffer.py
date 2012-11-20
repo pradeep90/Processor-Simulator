@@ -6,7 +6,6 @@ class DecoderBuffer(StageBuffer):
     """
     arg_list = [
         'instr',
-        'is_decoder_stalled',
         'npc',
         'rs',
         'rt',

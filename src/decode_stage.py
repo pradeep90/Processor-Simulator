@@ -9,6 +9,8 @@ from fetch_stage import FetchStage
 class DecodeStage(object):
     """Simulator for the Decode stage of a MIPS pipeline.
     """
+
+    is_stalled = False
     
     def __init__(self, fetcher_buffer, decoder_buffer, register_file):
         """Set the fetcher_buffer and decoder_buffer for the stage.
@@ -25,13 +27,6 @@ class DecodeStage(object):
         as dirty. And if the input registers are not dirty, then put
         them in the buffer.
 
-        decoder_buffer contains:
-        + instr
-        + rs
-        + rt
-        + npc
-        + is_decoder_stalled
-
         Arguments:
         - `fetcher_buffer`: contains
           + instr
@@ -39,7 +34,7 @@ class DecodeStage(object):
         """
         instr = self.fetcher_buffer.instr
         npc = self.fetcher_buffer.npc
-        is_decoder_stalled = False
+        self.is_stalled = False
 
         if (self.register_file.isClean (instr.rs) and
             self.register_file.isClean (instr.rt)):
@@ -48,18 +43,14 @@ class DecodeStage(object):
             self.register_file.setDirty (instr.rd)
 
             self.decoder_buffer.update({
-                'is_decoder_stalled': is_decoder_stalled,
                 'instr': instr,
                 'rs': [instr.rs, self.register_file [instr.rs]],
                 'rt': [instr.rt, self.register_file [instr.rt]],
                 'npc': npc,
                 })
         else:
-            is_decoder_stalled = True
+            self.is_stalled = True
             self.register_file.setDirty (instr.rd)
-            self.decoder_buffer.update({
-                'is_decoder_stalled': is_decoder_stalled,
-            })
 
     def decode_I_instruction(self):
         """Return decoder_buffer given fetcher_buffer.
@@ -83,7 +74,7 @@ class DecodeStage(object):
         """
         instr = self.fetcher_buffer.instr
         npc = self.fetcher_buffer.npc
-        is_decoder_stalled = False
+        self.is_stalled = False
 
         # I type: rt <- rs funct imm
         # I type load: rt <- mem [imm (rs)]
@@ -93,19 +84,14 @@ class DecodeStage(object):
                 self.fetcher_buffer = FetcherBuffer()
                 self.register_file.setDirty (instr.rt)
                 self.decoder_buffer.update({
-                    'is_decoder_stalled': is_decoder_stalled,
                     'instr': instr,
                     'rs': [instr.rs, self.register_file [instr.rs]],
                     'npc': npc,
                     'immediate': instr.immediate
                     })
             else:
-                is_decoder_stalled = True
+                self.is_stalled = True
                 self.register_file.setDirty (instr.rt)
-                self.decoder_buffer.update({
-                    'is_decoder_stalled': is_decoder_stalled,
-                    })
-
         # I type store: mem [imm (rs)] <- rt
         # I type branch: jump to imm depending on comparison of rs and rt
         elif (instr.type == 'I' and instr.opcode in ['SB', 'BEQ', 'SW', 'BNE']):
@@ -113,7 +99,6 @@ class DecodeStage(object):
                 self.register_file.isClean (instr.rt)):
                 self.fetcher_buffer = FetcherBuffer()
                 self.decoder_buffer.update({
-                    'is_decoder_stalled': is_decoder_stalled,
                     'instr': instr,
                     'rs': [instr.rs, self.register_file [instr.rs]],
                     'rt': [instr.rt, self.register_file [instr.rt]],
@@ -121,10 +106,7 @@ class DecodeStage(object):
                     'immediate': instr.immediate
                 })
             else:
-                is_decoder_stalled = True
-                self.decoder_buffer.update({
-                    'is_decoder_stalled': is_decoder_stalled,
-                })
+                self.is_stalled = True
         
     @staticmethod
     def get_jump_address(npc, instr):
@@ -163,13 +145,12 @@ class DecodeStage(object):
         """
         instr = self.fetcher_buffer.instr
         npc = self.fetcher_buffer.npc
-        is_decoder_stalled = False
+        self.is_stalled = False
 
         self.fetcher_buffer = FetcherBuffer()
         PC = self.get_jump_address(npc, instr)
 
         self.decoder_buffer.update({
-            'is_decoder_stalled': is_decoder_stalled,
             'instr': instr,
             'npc': npc,
             'PC': PC,

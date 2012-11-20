@@ -63,12 +63,13 @@ class MemoryStageTest(unittest.TestCase):
         self.set_up_memory_stage('I LW  R2 R5 4')
 
         memory_buffer = MemoryBuffer({
-            'is_memory_stalled': False,
             'instr': self.instr,
             'rt': [self.instr.rt, 174],
             })
 
         self.memory_stage.do_memory_operation()
+
+        self.assertFalse(self.memory_stage.is_stalled)
         self.assertEqual(self.memory_stage.memory_buffer, 
                          memory_buffer)
         self.assertEqual(self.memory_stage.executer_buffer, 
@@ -80,11 +81,12 @@ class MemoryStageTest(unittest.TestCase):
         self.set_up_memory_stage('I SW  R2 R5 4')
 
         memory_buffer = MemoryBuffer({
-            'is_memory_stalled': False,
             'instr': self.instr,
             })
 
         self.memory_stage.do_memory_operation()
+
+        self.assertFalse(self.memory_stage.is_stalled)
         self.assertEqual(self.memory_stage.memory_buffer, 
                          memory_buffer)
         self.assertEqual(self.memory_stage.executer_buffer, 
@@ -96,12 +98,13 @@ class MemoryStageTest(unittest.TestCase):
         self.set_up_memory_stage('R ADD  R1 R2 R3')
 
         memory_buffer = MemoryBuffer({
-            'is_memory_stalled': False,
             'instr': self.instr,
             'rd': [3, 0],
             })
 
         self.memory_stage.do_memory_operation()
+
+        self.assertFalse(self.memory_stage.is_stalled)
         self.assertEqual(self.memory_stage.memory_buffer, 
                          memory_buffer)
         self.assertEqual(self.memory_stage.executer_buffer, 

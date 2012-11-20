@@ -40,13 +40,14 @@ class DecodeStageTest(unittest.TestCase):
         self.register_file.setClean(self.instr.rt)
 
         decoder_buffer = DecoderBuffer({
-            'is_decoder_stalled': False,
             'instr': self.instr,
             'rs': [self.instr.rs, self.register_file[self.instr.rs]],
             'rt': [self.instr.rt, self.register_file[self.instr.rt]],
             'npc': self.fetcher_buffer.npc,
             })
         self.decode_stage.decode_R_instruction()
+
+        self.assertFalse(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
         self.assertTrue(self.decode_stage.register_file.isDirty(self.instr.rd))
@@ -55,10 +56,10 @@ class DecodeStageTest(unittest.TestCase):
     def test_decode_R_instruction_dirty_reg(self): 
         self.set_up_decode_stage('R ADD  R1 R2 R3')
         self.register_file.setDirty(self.instr.rt)
-        decoder_buffer = DecoderBuffer({
-            'is_decoder_stalled': True,
-            })
+        decoder_buffer = DecoderBuffer()
         self.decode_stage.decode_R_instruction()
+
+        self.assertTrue(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
         self.assertTrue(self.decode_stage.register_file.isDirty(self.instr.rd))
@@ -70,13 +71,14 @@ class DecodeStageTest(unittest.TestCase):
         self.register_file.setClean(self.instr.rs)
     
         decoder_buffer = DecoderBuffer({
-            'is_decoder_stalled': False,
             'instr': self.instr,
             'rs': [self.instr.rs, self.register_file [self.instr.rs]],
             'npc': self.fetcher_buffer.npc,
             'immediate': self.instr.immediate,
             })
         self.decode_stage.decode_I_instruction()
+
+        self.assertFalse(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
         self.assertTrue(self.register_file.isDirty(self.instr.rt))
@@ -85,10 +87,10 @@ class DecodeStageTest(unittest.TestCase):
     def test_decode_I_instruction_funct_and_load_dirty_reg(self): 
         self.set_up_decode_stage('I ADDI R1 R1 1')
         self.register_file.setDirty(self.instr.rs)
-        decoder_buffer = DecoderBuffer({
-            'is_decoder_stalled': True,
-            })
+        decoder_buffer = DecoderBuffer()
         self.decode_stage.decode_I_instruction()
+
+        self.assertTrue(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
         self.assertTrue(self.register_file.isDirty(self.instr.rt))
@@ -102,7 +104,6 @@ class DecodeStageTest(unittest.TestCase):
         self.register_file.setClean(self.instr.rt)
 
         decoder_buffer = DecoderBuffer({
-            'is_decoder_stalled': False,
             'instr': self.instr,
             'rs': [self.instr.rs, self.register_file [self.instr.rs]],
             'rt': [self.instr.rt, self.register_file [self.instr.rt]],
@@ -110,6 +111,8 @@ class DecodeStageTest(unittest.TestCase):
             'immediate': self.instr.immediate,
             })
         self.decode_stage.decode_I_instruction()
+
+        self.assertFalse(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
         self.assertEqual(self.decode_stage.fetcher_buffer, FetcherBuffer())
@@ -118,10 +121,10 @@ class DecodeStageTest(unittest.TestCase):
         self.set_up_decode_stage('I BEQ  R2 R5 4')
         is_decoder_stalled = False
         self.register_file.setDirty(self.instr.rs)
-        decoder_buffer = DecoderBuffer({
-            'is_decoder_stalled': True,
-            })
+        decoder_buffer = DecoderBuffer()
+
         self.decode_stage.decode_I_instruction()
+        self.assertTrue(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
         self.assertEqual(self.decode_stage.fetcher_buffer, self.fetcher_buffer)
@@ -137,7 +140,6 @@ class DecodeStageTest(unittest.TestCase):
         is_decoder_stalled = False
 
         decoder_buffer = DecoderBuffer({
-            'is_decoder_stalled': False,
             'instr': self.instr,
             'npc': self.fetcher_buffer.npc,
             'PC': 12,

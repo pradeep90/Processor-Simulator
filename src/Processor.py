@@ -220,70 +220,32 @@ class Processor (object):
             # case of a jump.
             self.fetch_stage.fetch_input_buffer.PC = self.decode_stage.decoder_buffer.PC
         
-    def execute_cycles(self, num_cycles):
+    def execute_cycles(self, num_cycles = None):
         """Execute num_cycles cycles of the Processor (if possible).
 
-        Arguments:
-        - `num_cycles`:
+        Else, execute till the program terminates.
         """
         cycle_count = 0
-        while cycle_count < num_cycles:
+
+        while True:
             self.execute_one_cycle()
+
             cycle_count += 1
+            print 'Beginning of Cycle #' + str(cycle_count)
+            print '=' * 12
+            self.print_buffers ()
+            print self.register_file
+
+            if not self.are_instructions_in_flight() or (
+                    num_cycles is not None and cycle_count == num_cycles):
+                break
 
     def start(self, cycle_data_file_name = default_data_file_name):
         """Start execution of instructions from the start_address.
         """
         self.instruction_address = self.start_address
         self.more_instructions_to_fetch = True
-
-        # # 1-based list of stuff generated at the end of each cycle.
-        # cycle_data_list = [None,]
-
-        while (self.more_instructions_to_fetch):
-            self.cycle_count += 1
-            print 'Beginning of Cycle #' + str(self.cycle_count)
-            print '=' * 12
-
-            # cycle_data_list.append(self.get_all_curr_data())
-
-            self.print_buffers ()
-            print self.register_file
-
-            # TODO: Make it such that you run them in reverse order
-            # and pass along the is_X_stalled value to the previous
-            # pipeline stage.
-
-            self.writeBackRegisters ()
-            self.memory_buffer = self.doMemoryOperations () or self.memory_buffer
-            self.executer_buffer = self.execute () or self.executer_buffer
-            self.decoder_buffer = self.decode_instruction () or self.decoder_buffer
-
-            fetch_input_buffer = {
-                'PC': self.PC,
-                'memory': self.memory,
-                'is_decoder_stalled': self.decoder_stalled,
-                'instr_count': self.instr_count,
-                }
-            gen_fetcher_buffer = self.fetch_instruction (fetch_input_buffer) or self.fetcher_buffer
-            # self.fetcher_buffer = self.fetch_instruction (fetch_input_buffer) or self.fetcher_buffer
-            self.fetcher_buffer = self.fetchInstruction() or self.fetcher_buffer
-
-            if gen_fetcher_buffer != self.fetcher_buffer:
-                print 'gen_fetcher_buffer'
-                pprint(gen_fetcher_buffer)
-                print 'self.fetcher_buffer'
-                pprint(self.fetcher_buffer)
-                
-
-            self.more_instructions_to_fetch = (
-                self.memory_buffer or
-                self.executer_buffer or
-                self.decoder_buffer or
-                self.fetcher_buffer
-            )
-
-        self.save_cycle_data(cycle_data_list, cycle_data_file_name)
+        self.execute_cycles()
 
     def getCPI (self):
         return (1.0 * self.cycle_count) / self.instr_count
