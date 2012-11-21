@@ -109,6 +109,21 @@ class MemoryStageTest(unittest.TestCase):
                          memory_buffer)
         self.assertEqual(self.memory_stage.executer_buffer, 
                          self.executer_buffer)
+
+        self.set_up_memory_stage('I ADDI R1 R1 1')
+
+        memory_buffer = MemoryBuffer({
+            'instr': self.instr,
+            'rt': [self.instr.rt, self.register_file[1] + 1],
+            })
+
+        self.memory_stage.do_memory_operation()
+
+        self.assertFalse(self.memory_stage.is_stalled)
+        self.assertEqual(self.memory_stage.memory_buffer, 
+                         memory_buffer)
+        self.assertEqual(self.memory_stage.executer_buffer, 
+                         self.executer_buffer)
     
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(MemoryStageTest)

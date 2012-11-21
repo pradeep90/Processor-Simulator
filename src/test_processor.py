@@ -36,6 +36,11 @@ class ProcessorTest(unittest.TestCase):
 
     def test_are_instructions_in_flight(self): 
         self.assertFalse(self.processor.are_instructions_in_flight())
+
+        self.processor.decode_stage.is_stalled = True
+        self.assertTrue(self.processor.are_instructions_in_flight())
+        self.processor.decode_stage.is_stalled = False
+
         self.processor.execute_one_cycle()
         self.assertTrue(self.processor.are_instructions_in_flight())
 

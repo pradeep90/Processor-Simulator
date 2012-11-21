@@ -11,6 +11,8 @@ class DecodeStage(object):
     """
 
     is_stalled = False
+    has_jumped = False
+    jump_pc = None
     
     def __init__(self, fetcher_buffer, decoder_buffer, register_file):
         """Set the fetcher_buffer and decoder_buffer for the stage.
@@ -106,6 +108,7 @@ class DecodeStage(object):
                     'immediate': instr.immediate
                 })
             else:
+                print 'decode stall'
                 self.is_stalled = True
         
     @staticmethod
@@ -148,13 +151,16 @@ class DecodeStage(object):
         self.is_stalled = False
 
         self.fetcher_buffer = FetcherBuffer()
-        PC = self.get_jump_address(npc, instr)
+        self.jump_pc = self.get_jump_address(npc, instr)
 
-        self.decoder_buffer.update({
-            'instr': instr,
-            'npc': npc,
-            'PC': PC,
-            })
+        self.has_jumped = True
+
+        self.decoder_buffer = DecoderBuffer()
+        # self.decoder_buffer.update({
+        #     'instr': instr,
+        #     'npc': npc,
+        #     'PC': PC,
+        #     })
 
     def decode_instruction (self, is_executer_stalled = False):
         """Decode the instr in fetcher_buffer and read from registers.
@@ -167,6 +173,12 @@ class DecodeStage(object):
         Return decoder_buffer.
         """
         if is_executer_stalled or self.fetcher_buffer.instr is None: 
+            self.decoder_buffer = DecoderBuffer({})
+            return
+
+        if self.has_jumped:
+            # I don't know the full impact of this. Hence a separate 'if'.
+            self.has_jumped = False
             self.decoder_buffer = DecoderBuffer({})
             return
 

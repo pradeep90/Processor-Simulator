@@ -6,7 +6,6 @@ class ExecuterBuffer(StageBuffer):
     """
     arg_list = [
         'instr',
-        'is_executer_stalled',
         'memaddr',
         'npc',
         'rt',

@@ -44,3 +44,9 @@
 * Memory
 ** DONE Refactoring - docstrings + unit tests
    CLOCK: [2012-10-20 Sat 19:09]--[2012-10-20 Sat 19:33] =>  0:24
+* Notes
+** VVIP BEQ goes on till write back stage.
+*** It doesn't do anything, but still...
+*** Should it be stopped beforehand?
+* Upgrading to Superscalar
+** 

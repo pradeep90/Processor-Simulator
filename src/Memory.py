@@ -86,8 +86,8 @@ class Memory (object):
     def __str__ (self):
         if self.list and type(self.list[0]) == list:
             # print 'Memory __str__: instructions are list of tokens'
-            return '\n'.join (' '.join(instruction_in_list_format) 
-                              for instruction_in_list_format in self.list)
+            return '\n'.join (str(4 * i) + ' ' + ' '.join(instruction_in_list_format) 
+                              for i, instruction_in_list_format in enumerate(self.list))
         return '\n'.join (self.list)
 
     def __eq__(self, other):

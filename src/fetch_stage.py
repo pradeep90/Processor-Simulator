@@ -18,19 +18,20 @@ class FetchStage(object):
 
         Update PC.
         Return fetcher_buffer for the next cycle.
-
-        TODO: Update instr_count
         """
         if is_decoder_stalled:
-            self.fetcher_buffer = FetcherBuffer({})
+            self.fetcher_buffer = FetcherBuffer()
             return
 
         try:
             self.fetcher_buffer.instr = Instruction(
                 self.memory[self.fetch_input_buffer.PC])
+            print 'self.fetcher_buffer.instr: ', self.fetcher_buffer.instr
             self.fetcher_buffer.PC = self.fetch_input_buffer.PC
             self.fetcher_buffer.npc = self.fetcher_buffer.PC + 4
             self.fetch_input_buffer.PC = self.fetcher_buffer.npc
             self.fetch_input_buffer.instr_count += 1
+
+            print 'updated PC'
         except IndexError:
             self.fetcher_buffer = FetcherBuffer()

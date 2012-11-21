@@ -67,7 +67,6 @@ class DecodeStageTest(unittest.TestCase):
 
     def test_decode_I_instruction_funct_and_load(self):
         self.set_up_decode_stage('I ADDI R1 R1 1')
-        is_decoder_stalled = False
         self.register_file.setClean(self.instr.rs)
     
         decoder_buffer = DecoderBuffer({
@@ -98,7 +97,6 @@ class DecodeStageTest(unittest.TestCase):
 
     def test_decode_I_instruction_store_and_branch(self):
         self.set_up_decode_stage('I BEQ  R2 R5 4')
-        is_decoder_stalled = False
 
         self.register_file.setClean(self.instr.rs)
         self.register_file.setClean(self.instr.rt)
@@ -119,7 +117,6 @@ class DecodeStageTest(unittest.TestCase):
 
     def test_decode_I_instruction_store_and_branch_dirty_reg(self): 
         self.set_up_decode_stage('I BEQ  R2 R5 4')
-        is_decoder_stalled = False
         self.register_file.setDirty(self.instr.rs)
         decoder_buffer = DecoderBuffer()
 
@@ -137,7 +134,6 @@ class DecodeStageTest(unittest.TestCase):
 
     def test_decode_J_instruction(self):
         self.set_up_decode_stage('J J    3')
-        is_decoder_stalled = False
 
         decoder_buffer = DecoderBuffer({
             'instr': self.instr,

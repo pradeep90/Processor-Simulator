@@ -21,7 +21,10 @@ class WriteBackStage(object):
             self.register_file.setClean (instr.rd)
             self.register_file[self.memory_buffer.rd[0]] = self.memory_buffer.rd[1]
         elif instr.type == 'I':
-            self.register_file.setClean (instr.rt)
-            self.register_file[self.memory_buffer.rt[0]] = self.memory_buffer.rt[1]
+            if instr.opcode in ['BEQ', 'BNE']:
+                pass
+            else:
+                self.register_file.setClean (instr.rt)
+                self.register_file[self.memory_buffer.rt[0]] = self.memory_buffer.rt[1]
 
         self.memory_buffer = MemoryBuffer()
