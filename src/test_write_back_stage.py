@@ -46,12 +46,13 @@ class WriteBackStageTest(unittest.TestCase):
 
     def test_write_back_R(self): 
         self.set_up_write_back_stage('R ADD  R1 R2 R3')
+        expected_reg_value = self.memory_buffer.rd[1]
         self.write_back_stage.write_back()
         self.assertEqual(self.write_back_stage.memory_buffer, 
                          MemoryBuffer())       
         self.assertEqual(
             self.write_back_stage.register_file[self.instr.rd], 
-                self.memory_buffer.rd[1])
+                expected_reg_value)
         self.assertTrue(self.register_file.isClean(self.instr.rd))
 
     def test_write_back_I(self): 

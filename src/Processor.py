@@ -38,7 +38,7 @@ class Processor (object):
             'PC': self.start_address,
             'instr_count': self.instr_count,
             })
-        self.fetcher_buffer = FetcherBuffer({})
+        self.fetcher_buffer = FetcherBuffer()
         self.fetch_stage = FetchStage(self.memory, 
                                       self.fetch_input_buffer, 
                                       self.fetcher_buffer)
@@ -194,6 +194,8 @@ class Processor (object):
 
     def are_instructions_in_flight(self, ):
         """Return True iff there exist instructions in-flight.
+
+        TODO: Check if any registers are dirty.
         """
         any_non_empty_buffers = not all(buff.is_empty() for buff in 
                                         [self.memory_stage.memory_buffer,
@@ -203,34 +205,51 @@ class Processor (object):
         any_stalls = any(stage.is_stalled for stage in [self.decode_stage,
                                                         self.execute_stage,
                                                         self.memory_stage])
-        return any_non_empty_buffers or any_stalls
+        valid_PC_coming_up = self.fetch_stage.is_valid_PC()
+
+        return any_non_empty_buffers or any_stalls or valid_PC_coming_up
         
     def execute_one_cycle(self, ):
         """Execute one cycle of the Processor.
+
+
+        TODO: Make it such that the stages SHARE the buffer (ie. have
+        a reference to the same buffer) instead of having copies named
+        FetcherBuffer, etc.
         """
         self.write_back_stage.write_back()
         self.memory_stage.do_memory_operation()
         self.execute_stage.execute(self.memory_stage.is_stalled)
         self.decode_stage.decode_instruction(self.execute_stage.is_stalled)
         self.fetch_stage.fetch_instruction(self.decode_stage.is_stalled)
-        self.write_back_stage.memory_buffer = self.memory_stage.memory_buffer
 
-        if not self.memory_stage.is_stalled:
-            self.memory_stage.executer_buffer = self.execute_stage.executer_buffer
+        # self.write_back_stage.memory_buffer = self.memory_stage.memory_buffer
 
-        if not self.execute_stage.is_stalled and not self.decode_stage.has_jumped:
-            self.execute_stage.decoder_buffer = self.decode_stage.decoder_buffer
+        # if not self.memory_stage.is_stalled:
+        #     self.memory_stage.executer_buffer = self.execute_stage.executer_buffer
 
-        if not self.decode_stage.is_stalled:
-            self.decode_stage.fetcher_buffer = self.fetch_stage.fetcher_buffer
+        # if (not self.execute_stage.is_stalled 
+        #     and not self.decode_stage.has_jumped):
+        #     self.execute_stage.decoder_buffer = self.decode_stage.decoder_buffer
 
-        # TODO:
+        # # TODO: What is this for?
+        # if not self.decode_stage.is_stalled and not self.execute_stage.branch_pc is not None:
+        #     self.decode_stage.fetcher_buffer = self.fetch_stage.fetcher_buffer
+
+        if self.execute_stage.branch_pc is not None:
+            self.decode_stage.undo_dirties(self.execute_stage.is_stalled)
+            print 'self.register_file: ', self.register_file
+            self.decoder_buffer.clear()
+            self.fetcher_buffer.clear()
+            
+        # TODO: Can there be a jump PC from Decode and a branch PC
+        # from Execute at the end of the same cycle?
         if self.decode_stage.has_jumped:
             # Pass on PC value from decoder_buffer to fetcher_buffer in
             # case of a jump.
             self.fetch_stage.fetch_input_buffer.PC = self.decode_stage.jump_pc
-        elif self.execute_stage.executer_buffer.npc is not None:
-            self.fetch_stage.fetch_input_buffer.PC = self.execute_stage.executer_buffer.npc
+        elif self.execute_stage.branch_pc is not None:
+            self.fetch_stage.fetch_input_buffer.PC = self.execute_stage.branch_pc
         
     def execute_cycles(self, num_cycles = None):
         """Execute num_cycles cycles of the Processor (if possible).
@@ -259,7 +278,7 @@ class Processor (object):
                     num_cycles is not None and self.cycle_count == num_cycles):
                 break
 
-        print 'At the end'
+        print '\nAt the end'
         print '=' * 12
         self.print_buffers ()
         print self.register_file

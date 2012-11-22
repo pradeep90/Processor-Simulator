@@ -20,7 +20,38 @@ class DecodeStage(object):
         self.fetcher_buffer = fetcher_buffer
         self.decoder_buffer = decoder_buffer
         self.register_file = register_file
-        
+
+    def undo_dirties(self, is_executer_stalled = False):
+        """Undo the dirty-ing done by this stage.
+
+        Needed when a branch has occurred and the next instruction's
+        effects have to be undone.
+        """
+        # Use decoder_buffer cos the old fetcher_buffer's contents
+        # would have now gone into decoder_buffer
+        instr = self.decoder_buffer.instr
+        if is_executer_stalled or instr is None: 
+            return
+
+        if self.has_jumped:
+            return
+
+        if instr.type == 'R':
+            print 'Made it clean'
+            print 'instr: ', instr
+            print 'instr.rt: ', instr.rt
+            print 'instr.rs: ', instr.rs
+            print 'instr.rd: ', instr.rd
+            self.register_file.setClean(instr.rd)
+        elif instr.type == 'I':
+            if (instr.type == 'I' and instr.opcode in [
+                    'ADDI', 'ANDI', 'ORI', 'XORI', 'LB', 'LW']):
+                self.register_file.setClean(instr.rt)
+            elif (instr.type == 'I' and instr.opcode in ['SB', 'BEQ', 'SW', 'BNE']):
+                pass
+        elif instr.type == 'J':
+            pass
+
     def decode_R_instruction(self):
         """Return decoder_buffer given fetcher_buffer.
 
@@ -41,7 +72,7 @@ class DecodeStage(object):
         if (self.register_file.isClean (instr.rs) and
             self.register_file.isClean (instr.rt)):
 
-            self.fetcher_buffer = FetcherBuffer()
+            self.fetcher_buffer.clear()
             self.register_file.setDirty (instr.rd)
 
             self.decoder_buffer.update({
@@ -83,7 +114,7 @@ class DecodeStage(object):
         if (instr.type == 'I' and instr.opcode in [
                 'ADDI', 'ANDI', 'ORI', 'XORI', 'LB', 'LW']):
             if self.register_file.isClean (instr.rs):
-                self.fetcher_buffer = FetcherBuffer()
+                self.fetcher_buffer.clear()
                 self.register_file.setDirty (instr.rt)
                 self.decoder_buffer.update({
                     'instr': instr,
@@ -99,7 +130,7 @@ class DecodeStage(object):
         elif (instr.type == 'I' and instr.opcode in ['SB', 'BEQ', 'SW', 'BNE']):
             if (self.register_file.isClean (instr.rs) and
                 self.register_file.isClean (instr.rt)):
-                self.fetcher_buffer = FetcherBuffer()
+                self.fetcher_buffer.clear()
                 self.decoder_buffer.update({
                     'instr': instr,
                     'rs': [instr.rs, self.register_file [instr.rs]],
@@ -150,12 +181,12 @@ class DecodeStage(object):
         npc = self.fetcher_buffer.npc
         self.is_stalled = False
 
-        self.fetcher_buffer = FetcherBuffer()
+        self.fetcher_buffer.clear()
         self.jump_pc = self.get_jump_address(npc, instr)
 
         self.has_jumped = True
 
-        self.decoder_buffer = DecoderBuffer()
+        # self.decoder_buffer.clear()
         # self.decoder_buffer.update({
         #     'instr': instr,
         #     'npc': npc,
@@ -173,13 +204,13 @@ class DecodeStage(object):
         Return decoder_buffer.
         """
         if is_executer_stalled or self.fetcher_buffer.instr is None: 
-            self.decoder_buffer = DecoderBuffer({})
+            self.decoder_buffer.clear()
             return
 
         if self.has_jumped:
             # I don't know the full impact of this. Hence a separate 'if'.
             self.has_jumped = False
-            self.decoder_buffer = DecoderBuffer({})
+            self.decoder_buffer.clear()
             return
 
         if self.fetcher_buffer.instr.type == 'R':

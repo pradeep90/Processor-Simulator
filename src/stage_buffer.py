@@ -30,8 +30,17 @@ class StageBuffer(object):
         Arguments:
         - `other`:
         """
+
         if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
+            is_self_empty = all(self[key] is None for key in self.__dict__) 
+            is_other_empty = all(other[key] is None for key in other.__dict__)
+
+            if is_self_empty or is_other_empty:
+                # They may have differing properties, but they must
+                # all be None
+                return is_self_empty and is_other_empty
+            else:
+                return self.__dict__ == other.__dict__
         else:
             return False
 
@@ -43,3 +52,18 @@ class StageBuffer(object):
         """
         self.__dict__.update(given_dict)
 
+    def clear(self, ):
+        """Clear buffer.
+        """
+        for key in self.__dict__:
+            self[key] = None
+
+    def __str__(self, ):
+        """
+        """
+        return str(self.__dict__)
+
+    def __repr__(self, ):
+        """
+        """
+        return self.__str__() 

@@ -135,11 +135,12 @@ class DecodeStageTest(unittest.TestCase):
     def test_decode_J_instruction(self):
         self.set_up_decode_stage('J J    3')
 
-        decoder_buffer = DecoderBuffer({
-            'instr': self.instr,
-            'npc': self.fetcher_buffer.npc,
-            'PC': 12,
-            })
+        # decoder_buffer = DecoderBuffer({
+        #     'instr': self.instr,
+        #     'npc': self.fetcher_buffer.npc,
+        #     'PC': 12,
+        #     })
+        decoder_buffer = DecoderBuffer()
         self.decode_stage.decode_J_instruction()
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)

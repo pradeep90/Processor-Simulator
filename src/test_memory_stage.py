@@ -46,14 +46,14 @@ class MemoryStageTest(unittest.TestCase):
     def test_do_memory_operation_stall(self): 
         self.set_up_memory_stage('I LW  R2 R5 4')
 
+        self.memory_stage.memory_buffer = MemoryBuffer({'foo': 123})
+
         self.memory_stage.do_memory_operation(True)
-        self.assertEqual(self.memory_stage.memory_buffer, 
-                         MemoryBuffer())
+        self.assertEqual(self.memory_stage.memory_buffer, MemoryBuffer({'foo': 123}))
 
         self.executer_buffer.instr = None
         self.memory_stage.do_memory_operation(True)
-        self.assertEqual(self.memory_stage.memory_buffer, 
-                         MemoryBuffer())
+        self.assertEqual(self.memory_stage.memory_buffer, MemoryBuffer({'foo': 123}))
         self.assertEqual(self.memory_stage.executer_buffer, 
                          self.executer_buffer)
 
@@ -107,8 +107,7 @@ class MemoryStageTest(unittest.TestCase):
         self.assertFalse(self.memory_stage.is_stalled)
         self.assertEqual(self.memory_stage.memory_buffer, 
                          memory_buffer)
-        self.assertEqual(self.memory_stage.executer_buffer, 
-                         self.executer_buffer)
+        self.assertEqual(self.memory_stage.executer_buffer, ExecuterBuffer())
 
         self.set_up_memory_stage('I ADDI R1 R1 1')
 
@@ -123,7 +122,7 @@ class MemoryStageTest(unittest.TestCase):
         self.assertEqual(self.memory_stage.memory_buffer, 
                          memory_buffer)
         self.assertEqual(self.memory_stage.executer_buffer, 
-                         self.executer_buffer)
+                         ExecuterBuffer())
     
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(MemoryStageTest)

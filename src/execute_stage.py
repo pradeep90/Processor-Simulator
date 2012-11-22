@@ -6,6 +6,7 @@ class ExecuteStage(object):
     """
 
     is_stalled = False
+    branch_pc = None
     
     def __init__(self, decoder_buffer, executer_buffer):
         """Set the decoder buffer and executer buffer for the Execute Stage.
@@ -54,7 +55,7 @@ class ExecuteStage(object):
                                                    self.decoder_buffer.rs[1],
                                                    self.decoder_buffer.rt[1])],
                 })
-            self.decoder_buffer = DecoderBuffer()
+            self.decoder_buffer.clear()
         else:
             # Here, we should take care of operand fowarding
             self.is_stalled = True
@@ -79,7 +80,7 @@ class ExecuteStage(object):
                                              self.decoder_buffer['rs'] [1],
                                              self.decoder_buffer['immediate'])]
                     })
-                self.decoder_buffer = DecoderBuffer()
+                self.decoder_buffer.clear()
                 return
 
             # Load : rt <- mem [imm (rs)]
@@ -88,7 +89,7 @@ class ExecuteStage(object):
                 memaddr = (self.decoder_buffer ['rs'] [1]
                            +
                            self.decoder_buffer ['immediate'])
-                self.decoder_buffer = DecoderBuffer()
+                self.decoder_buffer.clear()
 
                 # TODO: Why is rt here not of the form 
                 # [instr.rt, register value] like the
@@ -113,7 +114,7 @@ class ExecuteStage(object):
                     'rt': self.decoder_buffer.rt,
                     'memaddr': memaddr,
                     })
-                self.decoder_buffer = DecoderBuffer()
+                self.decoder_buffer.clear()
                 return
 
         else:
@@ -147,12 +148,11 @@ class ExecuteStage(object):
                 # TODO: Should this be npc or npc - 4?
                 PC = npc
 
-            self.decoder_buffer = DecoderBuffer()
-            self.executer_buffer.update({
-                'instr': instr,
-                'npc': npc,
-                'PC': PC,
-                })
+            self.decoder_buffer.clear()
+
+            self.branch_pc = PC
+
+            # self.executer_buffer.clear()
             return
         else: 
             self.is_stalled = True
@@ -161,14 +161,17 @@ class ExecuteStage(object):
     def execute (self, is_mem_stalled = False):
         """Execute instruction.
         """
+        self.branch_pc = None
+
         if is_mem_stalled or self.decoder_buffer.instr is None: 
-            self.executer_buffer = ExecuterBuffer()
+            # self.executer_buffer.clear()
+            print 'Execute - nothing happened'
             return
 
         if self.decoder_buffer.instr.type == 'J':
             # TODO
             # self.executer_buffer = self.
-            pass
+            return
         if self.decoder_buffer.instr.type == 'R':
             self.execute_R_instruction()
             return

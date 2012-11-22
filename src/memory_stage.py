@@ -26,7 +26,7 @@ class MemoryStage(object):
         # {} and cup.
 
         if is_writeback_stalled or self.executer_buffer.instr is None: 
-            self.memory_buffer = MemoryBuffer()
+            # self.memory_buffer.clear()
             return
 
         self.is_stalled = False
@@ -38,7 +38,7 @@ class MemoryStage(object):
 
             mem_val = self.data_memory [self.executer_buffer.memaddr]
 
-            self.executer_buffer = ExecuterBuffer()
+            self.executer_buffer.clear()
             self.memory_buffer.update({
                 'instr': instr,
                 'rt': [instr.rt, mem_val]
@@ -48,7 +48,7 @@ class MemoryStage(object):
               instr.opcode [0] in 'S'):
             self.data_memory[self.executer_buffer.memaddr] = self.executer_buffer.rt[1]
             
-            self.executer_buffer = ExecuterBuffer()
+            self.executer_buffer.clear()
             self.memory_buffer.update({
                 'instr': instr,
                 })
@@ -61,3 +61,4 @@ class MemoryStage(object):
                 'rd': self.executer_buffer.rd,
                 'rt': self.executer_buffer.rt,
                 })
+            self.executer_buffer.clear()

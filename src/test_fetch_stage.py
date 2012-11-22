@@ -23,11 +23,18 @@ class FetchStageTest(unittest.TestCase):
     
     def tearDown(self):
         pass
+
+    def test_is_valid_PC(self): 
+        print 'self.memory: ', self.memory
+        self.assertTrue(self.fetch_stage.is_valid_PC(0))
+        self.assertFalse(self.fetch_stage.is_valid_PC(4))
+        self.assertFalse(self.fetch_stage.is_valid_PC(1000))
     
     def test_fetch_instruction_decoder_stall(self):
+        init_fetcher_buffer = FetcherBuffer({'foo': 123})
+        self.fetch_stage.fetcher_buffer = FetcherBuffer({'foo': 123})
         self.fetch_stage.fetch_instruction(True)
-        self.assertEqual(self.fetch_stage.fetcher_buffer,
-                         FetcherBuffer({}))
+        self.assertEqual(self.fetch_stage.fetcher_buffer, init_fetcher_buffer)
 
     def test_fetch_instruction_normal(self): 
         ans_fetcher_buffer = FetcherBuffer({
@@ -49,9 +56,11 @@ class FetchStageTest(unittest.TestCase):
 
         self.fetch_input_buffer.PC = 200000
         self.fetch_stage.fetch_instruction()
-        self.assertEqual(self.fetch_stage.fetcher_buffer,
-                         FetcherBuffer(),
-                         "FetcherBuffer should become empty on out of bound PC.")
+
+        # # No, it shouldn't
+        # self.assertEqual(self.fetch_stage.fetcher_buffer,
+        #                  FetcherBuffer(),
+        #                  "FetcherBuffer should become empty on out of bound PC.")
 	
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(FetchStageTest)

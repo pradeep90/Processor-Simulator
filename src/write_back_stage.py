@@ -27,4 +27,4 @@ class WriteBackStage(object):
                 self.register_file.setClean (instr.rt)
                 self.register_file[self.memory_buffer.rt[0]] = self.memory_buffer.rt[1]
 
-        self.memory_buffer = MemoryBuffer()
+        self.memory_buffer.clear()

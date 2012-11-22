@@ -19,7 +19,6 @@
    CLOCK: [2012-11-02 Fri 11:29]--[2012-11-02 Fri 11:32] =>  0:03
 ** DONE Remove accesses to register_file in execute stage
    CLOCK: [2012-11-02 Fri 11:33]--[2012-11-02 Fri 11:40] =>  0:07
-* TODO Do buffer.clear() rather than set it to a new empty copy
 * DONE Make Buffer classes 
   CLOCK: [2012-10-29 Mon 14:58]--[2012-10-29 Mon 16:00] =>  1:02
 ** DONE stage buffer
@@ -48,5 +47,12 @@
 ** VVIP BEQ goes on till write back stage.
 *** It doesn't do anything, but still...
 *** Should it be stopped beforehand?
+** R ADD R1 R2 R3 means R3 = R1 + R2
+*** R ADD R1 R0 R3 means R3 = R1 + 0 = R1
+* DONE Implement buffer.clear ()
+** DONE Remove all references to output_buffer.clear () in all stages
+* DONE Fix BEQ if true bug
+** DONE Right now in the middle of making both fetcher buffers empty, and both decoder buffers empty 
+* TODO Also, write a test for J J
+* TODO Check if cycle count is correct
 * Upgrading to Superscalar
-** 

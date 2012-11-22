@@ -4,6 +4,7 @@ import test_decode_stage
 import test_execute_stage
 import test_fetcher_buffer
 import test_fetch_input_buffer
+import test_decoder_buffer
 import test_fetch_stage
 import test_instruction
 import test_memory
@@ -26,6 +27,7 @@ if __name__ == '__main__':
         test_processor.get_suite(),
         test_stage_buffer.get_suite(),
         test_write_back_stage.get_suite(),
+        test_decoder_buffer.get_suite(),
         ]
     
     all_tests = unittest.TestSuite(test_suites)

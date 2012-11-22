@@ -45,6 +45,10 @@ class FetcherBufferTest(unittest.TestCase):
         
         f3 = fetcher_buffer.FetcherBuffer(self.input_dict)
         self.assertEqual(f3, self.fetcher_buffer)
+
+        buff1 = fetcher_buffer.FetcherBuffer({'foo': 123})
+        buff_empty = fetcher_buffer.FetcherBuffer()
+        self.assertNotEqual(buff1, buff_empty)
     
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(FetcherBufferTest)

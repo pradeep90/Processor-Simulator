@@ -157,49 +157,50 @@ class ExecuteStageTest(unittest.TestCase):
         self.register_file[5] = 8
         self.set_up_execute_stage('I BEQ  R2 R5 4')
 
-        executer_buffer = ExecuterBuffer({
-            'instr': self.instr,
-            'npc': self.decoder_buffer.npc,
-            'PC': self.decoder_buffer.npc + 4 * 4,
-            })
-
+        expected_branch_PC = self.decoder_buffer.npc + 4 * 4
         self.execute_stage.execute_I_instruction()
 
         self.assertFalse(self.execute_stage.is_stalled)
-        self.assertEqual(self.execute_stage.executer_buffer, 
-                         executer_buffer)
-        self.assertEqual(self.execute_stage.decoder_buffer, 
-                         DecoderBuffer())
+        self.assertEqual(self.execute_stage.branch_pc, expected_branch_PC)
+        self.assertEqual(self.execute_stage.executer_buffer, ExecuterBuffer())
+        self.assertEqual(self.execute_stage.decoder_buffer, DecoderBuffer())
 
     def test_execute_I_instruction_BEQ_false(self): 
         self.register_file[2] = 8
         self.register_file[5] = 7
         self.set_up_execute_stage('I BEQ  R2 R5 4')
+        expected_branch_PC = self.decoder_buffer.npc
 
-        executer_buffer = ExecuterBuffer({
-            'instr': self.instr,
-            'npc': self.decoder_buffer.npc,
-            'PC': self.decoder_buffer.npc,
-            })
+        self.execute_stage.executer_buffer = ExecuterBuffer({'foo': 123})
 
         self.execute_stage.execute_I_instruction()
         self.assertFalse(self.execute_stage.is_stalled)
-        self.assertEqual(self.execute_stage.executer_buffer, 
-                         executer_buffer)
-        self.assertEqual(self.execute_stage.decoder_buffer, 
-                         DecoderBuffer())
+        print 'self.decoder_buffer: ', self.decoder_buffer
+
+        self.assertEqual(self.execute_stage.branch_pc, expected_branch_PC)
+
+        # NOTE: You need different instances of ExecuterBuffers, else,
+        # just one instance gets modified and the two references will
+        # turn out to be equal.
+        self.assertEqual(self.execute_stage.executer_buffer, ExecuterBuffer({'foo': 123}),
+                         "execute_stage shouldn't modify its executer_buffer after a BEQ")
+        self.assertEqual(self.execute_stage.decoder_buffer, DecoderBuffer())
 
     def test_execute(self): 
         self.set_up_execute_stage('R ADD  R1 R2 R3')
 
+        self.execute_stage.executer_buffer = ExecuterBuffer({'foo': 123})
+
         self.execute_stage.execute(True)
-        self.assertEqual(self.execute_stage.executer_buffer, 
-                         ExecuterBuffer())
+        self.assertEqual(self.execute_stage.executer_buffer, ExecuterBuffer({'foo': 123}),
+                         "execute_stage shouldn't modify its executer_buffer after a stall")
 
         self.decoder_buffer.instr = None
         self.execute_stage.execute(True)
-        self.assertEqual(self.execute_stage.executer_buffer, 
-                         ExecuterBuffer())
+
+        self.assertEqual(self.execute_stage.executer_buffer, ExecuterBuffer({'foo': 123}),
+                         "execute_stage shouldn't modify its executer_buffer after a stall")
+        
         self.assertEqual(self.execute_stage.decoder_buffer, 
                          self.decoder_buffer)
 	
