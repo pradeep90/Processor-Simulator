@@ -1,7 +1,8 @@
 from fetcher_buffer import FetcherBuffer
 from Instruction import Instruction
+from pipeline_stage import PipelineStage
 
-class FetchStage(object):
+class FetchStage(PipelineStage):
     """Simulator for Fetch stage of MIPS Processor.
     """
     

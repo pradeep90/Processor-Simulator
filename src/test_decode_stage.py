@@ -56,14 +56,21 @@ class DecodeStageTest(unittest.TestCase):
     def test_decode_R_instruction_dirty_reg(self): 
         self.set_up_decode_stage('R ADD  R1 R2 R3')
         self.register_file.setDirty(self.instr.rt)
-        decoder_buffer = DecoderBuffer()
+        decoder_buffer = DecoderBuffer({
+            'rt': [2, None], 
+            'rs': [1, 0], 
+            'instr': Instruction.Instruction('R ADD R1 R2 R3'.split()), 
+            'npc': 4, 
+            'PC': None
+            })
         self.decode_stage.decode_R_instruction()
 
-        self.assertTrue(self.decode_stage.is_stalled)
+        # self.assertTrue(self.decode_stage.is_stalled)
+        self.assertFalse(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
         self.assertTrue(self.decode_stage.register_file.isDirty(self.instr.rd))
-        self.assertEqual(self.decode_stage.fetcher_buffer, self.fetcher_buffer)
+        self.assertEqual(self.decode_stage.fetcher_buffer, FetcherBuffer())
 
     def test_decode_I_instruction_funct_and_load(self):
         self.set_up_decode_stage('I ADDI R1 R1 1')

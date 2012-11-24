@@ -5,12 +5,12 @@ from pprint import pprint
 from fetcher_buffer import FetcherBuffer
 from decoder_buffer import DecoderBuffer
 from fetch_stage import FetchStage
+from pipeline_stage import PipelineStage
 
-class DecodeStage(object):
+class DecodeStage(PipelineStage):
     """Simulator for the Decode stage of a MIPS pipeline.
     """
 
-    is_stalled = False
     has_jumped = False
     jump_pc = None
     
@@ -67,23 +67,20 @@ class DecodeStage(object):
         """
         instr = self.fetcher_buffer.instr
         npc = self.fetcher_buffer.npc
-        self.is_stalled = False
+        self.unstall()
 
-        if (self.register_file.isClean (instr.rs) and
-            self.register_file.isClean (instr.rt)):
+        
+        self.fetcher_buffer.clear()
+        self.register_file.setDirty (instr.rd)
 
-            self.fetcher_buffer.clear()
-            self.register_file.setDirty (instr.rd)
-
-            self.decoder_buffer.update({
-                'instr': instr,
-                'rs': [instr.rs, self.register_file [instr.rs]],
-                'rt': [instr.rt, self.register_file [instr.rt]],
-                'npc': npc,
-                })
-        else:
-            self.is_stalled = True
-            self.register_file.setDirty (instr.rd)
+        self.decoder_buffer.update({
+            'instr': instr,
+            'rs': [instr.rs, self.register_file [instr.rs] 
+                   if self.register_file.isClean (instr.rs) else None],
+            'rt': [instr.rt, self.register_file [instr.rt] 
+                   if self.register_file.isClean (instr.rt) else None],
+            'npc': npc,
+            })
 
     def decode_I_instruction(self):
         """Return decoder_buffer given fetcher_buffer.
@@ -107,7 +104,7 @@ class DecodeStage(object):
         """
         instr = self.fetcher_buffer.instr
         npc = self.fetcher_buffer.npc
-        self.is_stalled = False
+        self.unstall()
 
         # I type: rt <- rs funct imm
         # I type load: rt <- mem [imm (rs)]
@@ -123,7 +120,7 @@ class DecodeStage(object):
                     'immediate': instr.immediate
                     })
             else:
-                self.is_stalled = True
+                self.stall()
                 self.register_file.setDirty (instr.rt)
         # I type store: mem [imm (rs)] <- rt
         # I type branch: jump to imm depending on comparison of rs and rt
@@ -140,7 +137,7 @@ class DecodeStage(object):
                 })
             else:
                 print 'decode stall'
-                self.is_stalled = True
+                self.stall()
         
     @staticmethod
     def get_jump_address(npc, instr):
@@ -179,7 +176,7 @@ class DecodeStage(object):
         """
         instr = self.fetcher_buffer.instr
         npc = self.fetcher_buffer.npc
-        self.is_stalled = False
+        self.unstall()
 
         self.fetcher_buffer.clear()
         self.jump_pc = self.get_jump_address(npc, instr)

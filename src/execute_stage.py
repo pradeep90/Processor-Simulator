@@ -1,11 +1,10 @@
 from executer_buffer import ExecuterBuffer
 from decoder_buffer import DecoderBuffer
+from pipeline_stage import PipelineStage
 
-class ExecuteStage(object):
+class ExecuteStage(PipelineStage):
     """Simulator for the Execute stage of a MIPS pipeline.
     """
-
-    is_stalled = False
     branch_pc = None
     
     def __init__(self, decoder_buffer, executer_buffer):
@@ -43,7 +42,7 @@ class ExecuteStage(object):
         """
         instr = self.decoder_buffer.instr
         npc = self.decoder_buffer.npc
-        self.is_stalled = False
+        self.unstall()
 
         # Check if operands are in the buffer
         if (self.decoder_buffer.rs is not None and
@@ -58,14 +57,14 @@ class ExecuteStage(object):
             self.decoder_buffer.clear()
         else:
             # Here, we should take care of operand fowarding
-            self.is_stalled = True
+            self.stall()
         
     def execute_I_instruction(self):
         """Execute the I instruction and update executer_buffer and decoder_buffer.
         """
         instr = self.decoder_buffer.instr
         npc = self.decoder_buffer.npc
-        self.is_stalled = False
+        self.unstall()
 
         # Check if operands are in the buffer.
         if (self.decoder_buffer.rs is not None and
@@ -118,7 +117,7 @@ class ExecuteStage(object):
                 return
 
         else:
-            self.is_stalled = True
+            self.stall()
             return
 
         # BEQ and BNE
@@ -155,7 +154,7 @@ class ExecuteStage(object):
             # self.executer_buffer.clear()
             return
         else: 
-            self.is_stalled = True
+            self.stall()
             return
 
     def execute (self, is_mem_stalled = False):

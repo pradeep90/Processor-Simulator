@@ -1,7 +1,14 @@
 # -*- org-pretty-entities-include-sub-superscripts: nil; -*-
 				Notes
 
-* Processor
+* Notes about MIPS
+** VVIP Our implementation: BEQ goes on till write back stage.
+*** It doesn't do anything, but still...
+*** Should it be stopped beforehand?
+** VVIP R ADD R1 R2 R3 means R3 = R1 + R2
+*** R ADD R1 R0 R3 means R3 = R1 + 0 = R1
+** I LW R1 R2 4 => R2 = 4(R1)
+* In-order Gen Processor
 ** Adding unit tests - getting the program to correspond to diagram on slide 7, [[/home/pradeep/Acads/CSD/Quiz-2-Slides/Lect-20.pdf][Lect 20]] - Dealing with Branches in the Pipeline
 *** do_operation
 *** DONE fetchInstruction
@@ -19,40 +26,95 @@
    CLOCK: [2012-11-02 Fri 11:29]--[2012-11-02 Fri 11:32] =>  0:03
 ** DONE Remove accesses to register_file in execute stage
    CLOCK: [2012-11-02 Fri 11:33]--[2012-11-02 Fri 11:40] =>  0:07
-* DONE Make Buffer classes 
-  CLOCK: [2012-10-29 Mon 14:58]--[2012-10-29 Mon 16:00] =>  1:02
-** DONE stage buffer
-** DONE fetch input buffer
-** DONE fetcher buffer
-** DONE decoder_buffer
-   CLOCK: [2012-11-01 Thu 10:03]--[2012-11-01 Thu 10:25] =>  0:22
-   CLOCK: [2012-10-31 Wed 13:50]--[2012-10-31 Wed 16:00] =>  2:10
-** DONE executer_buffer
-   CLOCK: [2012-11-01 Thu 12:10]--[2012-11-01 Thu 13:11] =>  1:01
-* DONE memory_stage
-  CLOCK: [2012-11-01 Thu 13:12]--[2012-11-01 Thu 14:07] =>  0:55
-* DONE write_back
-  CLOCK: [2012-11-01 Thu 14:07]--[2012-11-01 Thu 14:29] =>  0:22
-* DONE Isolate the stages and make them functional
-  CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
-  CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15
-** DONE Make a fetch stage and decode stage class.
-   CLOCK: [2012-10-29 Mon 16:00]--[2012-10-29 Mon 16:27] =>  0:27
-** DONE Make an execute stage
-   CLOCK: [2012-10-29 Mon 16:27]--[2012-10-29 Mon 16:52] =>  0:25
-* Memory
-** DONE Refactoring - docstrings + unit tests
-   CLOCK: [2012-10-20 Sat 19:09]--[2012-10-20 Sat 19:33] =>  0:24
-* Notes
-** VVIP BEQ goes on till write back stage.
-*** It doesn't do anything, but still...
-*** Should it be stopped beforehand?
-** R ADD R1 R2 R3 means R3 = R1 + R2
-*** R ADD R1 R0 R3 means R3 = R1 + 0 = R1
-* DONE Implement buffer.clear ()
-** DONE Remove all references to output_buffer.clear () in all stages
-* DONE Fix BEQ if true bug
-** DONE Right now in the middle of making both fetcher buffers empty, and both decoder buffers empty 
-* TODO Also, write a test for J J
-* TODO Check if cycle count is correct
+** DONE Make Buffer classes 
+   CLOCK: [2012-10-29 Mon 14:58]--[2012-10-29 Mon 16:00] =>  1:02
+*** DONE stage buffer
+*** DONE fetch input buffer
+*** DONE fetcher buffer
+*** DONE decoder_buffer
+    CLOCK: [2012-11-01 Thu 10:03]--[2012-11-01 Thu 10:25] =>  0:22
+    CLOCK: [2012-10-31 Wed 13:50]--[2012-10-31 Wed 16:00] =>  2:10
+*** DONE executer_buffer
+    CLOCK: [2012-11-01 Thu 12:10]--[2012-11-01 Thu 13:11] =>  1:01
+** DONE memory_stage
+   CLOCK: [2012-11-01 Thu 13:12]--[2012-11-01 Thu 14:07] =>  0:55
+** DONE write_back
+   CLOCK: [2012-11-01 Thu 14:07]--[2012-11-01 Thu 14:29] =>  0:22
+** DONE Isolate the stages and make them functional
+   CLOCK: [2012-10-26 Fri 21:09]--[2012-10-26 Fri 21:53] =>  0:44
+   CLOCK: [2012-10-26 Fri 20:54]--[2012-10-26 Fri 21:09] =>  0:15
+*** DONE Make a fetch stage and decode stage class.
+    CLOCK: [2012-10-29 Mon 16:00]--[2012-10-29 Mon 16:27] =>  0:27
+*** DONE Make an execute stage
+    CLOCK: [2012-10-29 Mon 16:27]--[2012-10-29 Mon 16:52] =>  0:25
+** Memory
+*** DONE Refactoring - docstrings + unit tests
+    CLOCK: [2012-10-20 Sat 19:09]--[2012-10-20 Sat 19:33] =>  0:24
+** DONE Implement buffer.clear ()
+*** DONE Remove all references to output_buffer.clear () in all stages
+** DONE Fix BEQ if true bug
+*** DONE Right now in the middle of making both fetcher buffers empty, and both decoder buffers empty 
+** TODO Also, write a test for J J
+** TODO Check if cycle count is correct
 * Upgrading to Superscalar
+** Aim - In-order superscalar
+*** Multi-issue in-order processor, wherein multiple instructions can be fetched, decoded, executed, and committed.
+*** Multi-cycle latency functional units
+*** Multiple functional units
+*** Operand forwarding
+*** 2-bit dynamic branch predictor + branch target buffer
+** Aim - out-of-order multi-issue superscalar
+*** Register renaming
+*** A centralized reservation station
+*** Re-order buffer
+*** Out-of-order execution
+* TODO Note: Why are we checking for buffer.rt is None and shit? If it's come down to execute_R, then there's definitely an instr field in the buffer... having rt = None is an ERROR not a stall.
+* The Plan
+** DONE Count CPI correctly
+*** It seems to be correct.
+*** 1.197 for fibo.txt with 85 cycles and 10 stalls
+*** Note: all the stalls were decoder stalls
+** TODO Operand forwarding
+   CLOCK: [2012-11-25 Sun 01:36]--[2012-11-25 Sun 02:44] =>  1:08
+   CLOCK: [2012-11-25 Sun 00:52]--[2012-11-25 Sun 01:31] =>  0:39
+*** pg 466 - 
+**** The ALU result from both the EX/MEM and MEM/WB pipeline registers is always fed back to the ALU inputs.
+**** If the forwarding hardware detects that the previous ALU operation has written the register corresponding to a source for the current ALU operation, control logic selects the forwarded result as the ALU input rather than the value read from the register file.
+**** Also, not just from the same unit to itself, but from one unit to another unit requiring data.
+*** Forwarding from EX/MEM and MEM/WB to ALU
+*** Implementation
+**** In decoder, never stall
+**** In execute, if forwarded stuff is available, go ahead. else, stall and set hash_operand_forward_fail
+***** decoder will stall as well
+***** eventually, the dirty reg will get written to (else, it wouldn't have been dirty)
+**** Check for None and 'Waiting' separately.
+**** VVIP Operand forwarding should all be done before you start executing. otherwise, decode stage will only see the new contents of executer_buffer not the ones at the end of the previous cycle.
+*** check that it works and CPI decreases
+** branch prediction + BTB
+*** Ch 2.3, pg 82 pp 110
+** multiple functional units
+** Tomasulo algo for out-of-order execution and shit
+*** Ch 2.4 - Dynamic rescheduling with renaming
+*** pg 91 (pdf pg 119) - 
+**** Fetch puts instructions into a queue
+**** split ID stage into two stages
+***** Issue - Decode instructions, check for structural hazards
+***** Read operands - Wait until no data hazards, then read operands
+*** It tracks when operands are available, to minimize RAW hazards
+*** Introduces register renaming, to minimize WAW and WAR hazards
+**** Register renaming eliminates these hazards by renaming all destination registers, including those with a pend- ing read or write for an earlier instruction, so that the out-of-order write does not affect any instructions that depend on an earlier value of an operand. 
+****  Register renaming is provided by reservation stations, which buffer the operands of instructions waiting to issue.
+***** The basic idea is that a reservation station fetches and buffers an operand as soon as it is available, eliminating the need to get the operand from a register.
+***** In addition, pending instructions designate the reservation station that will provide their input.
+***** Finally, when successive writes to a register overlap in execution, only the last one is actually used to update the register.
+***** As instructions are issued, the register specifiers for pending operands are renamed to the names of the reservation station, which provides register renaming.
+*** Actual algo pg 101, pp 129
+** Tomasulo with ROB
+*** pg 113 pp 141
+** Branch Target Buffer
+*** pg 124 pp 152
+** multi-issue
+*** Ch 2.7, 2.8
+** TODO multi-latency functional unit
+** Maybe make sure that the Register File has only 2 read ports and 1 write port
+** Check that CPI decreases

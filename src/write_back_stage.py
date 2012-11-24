@@ -1,6 +1,7 @@
 from memory_buffer import MemoryBuffer
+from pipeline_stage import PipelineStage
 
-class WriteBackStage(object):
+class WriteBackStage(PipelineStage):
     """Simulator for the Memory stage of a MIPS pipeline.
     """
     
@@ -21,7 +22,7 @@ class WriteBackStage(object):
             self.register_file.setClean (instr.rd)
             self.register_file[self.memory_buffer.rd[0]] = self.memory_buffer.rd[1]
         elif instr.type == 'I':
-            if instr.opcode in ['BEQ', 'BNE']:
+            if instr.opcode in ['BEQ', 'BNE', 'SW']:
                 pass
             else:
                 self.register_file.setClean (instr.rt)

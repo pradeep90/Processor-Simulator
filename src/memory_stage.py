@@ -1,11 +1,10 @@
 from memory_buffer import MemoryBuffer
 from executer_buffer import ExecuterBuffer
+from pipeline_stage import PipelineStage
 
-class MemoryStage(object):
+class MemoryStage(PipelineStage):
     """Simulator for the Memory stage of a MIPS pipeline.
     """
-
-    is_stalled = False
     
     def __init__(self, executer_buffer, memory_buffer, data_memory):
         """Set the executer_buffer and memory_buffer for the Memory Stage.
@@ -29,7 +28,7 @@ class MemoryStage(object):
             # self.memory_buffer.clear()
             return
 
-        self.is_stalled = False
+        self.unstall()
         instr = self.executer_buffer.instr
 
         # Load : rt <- mem [imm (rs)]
@@ -54,7 +53,7 @@ class MemoryStage(object):
                 })
         else:
             # Non-memory instructions
-            self.is_stalled = False
+            self.unstall()
 
             self.memory_buffer.update({
                 'instr': instr,

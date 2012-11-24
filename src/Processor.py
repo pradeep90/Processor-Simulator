@@ -236,6 +236,15 @@ class Processor (object):
         # if not self.decode_stage.is_stalled and not self.execute_stage.branch_pc is not None:
         #     self.decode_stage.fetcher_buffer = self.fetch_stage.fetcher_buffer
 
+        if (self.memory_stage.is_stalled or 
+            self.execute_stage.is_stalled or 
+            self.decode_stage.is_stalled):
+            print 'STALL'
+            print 'self.memory_stage.is_stalled, self.execute_stage.is_stalled, self.decode_stage.is_stalled: \n', [self.memory_stage.is_stalled, 
+                                              self.execute_stage.is_stalled, 
+                                              self.decode_stage.is_stalled]
+
+
         if self.execute_stage.branch_pc is not None:
             self.decode_stage.undo_dirties(self.execute_stage.is_stalled)
             print 'self.register_file: ', self.register_file
@@ -250,7 +259,7 @@ class Processor (object):
             self.fetch_stage.fetch_input_buffer.PC = self.decode_stage.jump_pc
         elif self.execute_stage.branch_pc is not None:
             self.fetch_stage.fetch_input_buffer.PC = self.execute_stage.branch_pc
-        
+    
     def execute_cycles(self, num_cycles = None):
         """Execute num_cycles cycles of the Processor (if possible).
 
@@ -300,4 +309,4 @@ if __name__ == "__main__":
     memory.loadProgramDebug (filename)
     processor = Processor (memory, 0)
     processor.start ()
-    print processor.getCPI ()
+    print 'CPI: ', processor.getCPI ()

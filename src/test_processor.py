@@ -90,6 +90,55 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(processor.decoder_buffer, DecoderBuffer())
         self.assertEqual(processor.fetcher_buffer, FetcherBuffer())
 
+    def test_operand_forwarding_ALU(self): 
+        # Expected output:
+        # R1 = 8, R4 = 8
+        # (R4) <- R5 = 9
+        # R2 <- (R1) = 9
+        instruction_list = [
+            'I ADDI R5 R5 9',
+            'I ADDI R2 R2 3',
+            'I ADDI R3 R3 5',
+            'I ADDI R4 R4 8',
+            'I ADDI R6 R6 9',
+            'R ADD  R2 R3 R1',
+            'I LW  R1 R2 0',
+            ]
+            # # Later
+            # 'I SW  R1 R5 0',
+        instruction_list = [instruction_string.split()
+                            for instruction_string in instruction_list]
+        memory = Memory.Memory(instruction_list)
+        processor = Processor.Processor(memory, 0)
+        processor.start()
+        print 'CPI: ', processor.getCPI ()
+        self.assertEqual(processor.decode_stage.num_stalls, 2)
+        self.assertEqual(processor.execute_stage.num_stalls, 0)
+        self.assertEqual(processor.memory_stage.num_stalls, 0)
+
+    # def test_operand_forwarding_R_and_R_instruction(self): 
+    #     instruction_list = [
+    #         'I ADDI R2 R2 3',
+    #         'I ADDI R3 R3 5',
+    #     # Filler
+    #         'I ADDI R6 R6 9',
+    #         'I ADDI R7 R7 9',
+    #         'I ADDI R8 R8 9',
+    #         'R ADD  R2 R3 R2',
+    #         'R ADD  R2 R3 R1',
+    #         ]
+    #         # # Later
+    #         # 'I SW  R1 R5 0',
+    #     instruction_list = [instruction_string.split()
+    #                         for instruction_string in instruction_list]
+    #     memory = Memory.Memory(instruction_list)
+    #     processor = Processor.Processor(memory, 0)
+    #     processor.start()
+    #     print 'CPI: ', processor.getCPI ()
+    #     self.assertEqual(processor.decode_stage.num_stalls, 0)
+    #     self.assertEqual(processor.execute_stage.num_stalls, 0)
+    #     self.assertEqual(processor.memory_stage.num_stalls, 0)
+
     def tearDown(self):
         pass
 
