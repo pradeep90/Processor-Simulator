@@ -57,7 +57,7 @@ class ExecuteStageTest(unittest.TestCase):
         self.register_file[1] = 3
         self.register_file[2] = 7
         self.set_up_execute_stage('R ADD  R1 R2 R3')
-        self.decoder_buffer.rs = None
+        self.decoder_buffer.rs = [1, None]
 
         executer_buffer = ExecuterBuffer()
 
@@ -69,8 +69,8 @@ class ExecuteStageTest(unittest.TestCase):
         self.assertEqual(self.execute_stage.decoder_buffer, self.decoder_buffer)
 
     def test_execute_I_instruction_ADDI_etc_no_operands(self): 
-        self.set_up_execute_stage('R ADD  R1 R2 R3')
-        self.decoder_buffer.rs = None
+        self.set_up_execute_stage('I ADDI R1 R1 1')
+        self.decoder_buffer.rs = [1, None]
 
         executer_buffer = ExecuterBuffer()
 
@@ -141,7 +141,7 @@ class ExecuteStageTest(unittest.TestCase):
         self.register_file[2] = 8
         self.set_up_execute_stage('I BEQ  R2 R5 4')
 
-        self.decoder_buffer.rs = None
+        self.decoder_buffer.rs = [2, None]
         executer_buffer = ExecuterBuffer()
 
         self.execute_stage.execute_I_instruction()

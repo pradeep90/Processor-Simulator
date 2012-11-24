@@ -27,7 +27,7 @@ class Processor (object):
         self.memory = memory
         self.start_address = start_address
         self.register_file = RegisterFile ()
-        self.data_memory_key_fn = lambda: -1
+        self.data_memory_key_fn = lambda: -777
         self.data_memory = defaultdict (self.data_memory_key_fn)
 
         self.cycle_count = 0
@@ -191,6 +191,27 @@ class Processor (object):
 
         if stage_name == 'memory':
             return memory_stage.memory_buffer
+    
+    def do_operand_forwarding(self, ):
+        """Forward operands if possible.
+        """
+        # ALU
+        # TODO: Be careful about this... check if it is an output reg
+        # value or an input reg value... (Does that make sense?)
+        for operand_label in ['rs', 'rt']:
+            if (self.decoder_buffer[operand_label] is not None 
+                and self.decoder_buffer[operand_label][1] is None):
+
+                reg_label = self.decoder_buffer[operand_label][0]
+                exec_forward_val = self.executer_buffer.get_reg_val(reg_label)
+                mem_forward_val = self.memory_buffer.get_reg_val(reg_label)
+
+                # Note: exec_forward_val or mem_forward_val won't work
+                # cos 0 or None => None
+                forward_val = exec_forward_val if exec_forward_val is not None \
+                  else mem_forward_val
+
+                self.decoder_buffer[operand_label][1] = forward_val
 
     def are_instructions_in_flight(self, ):
         """Return True iff there exist instructions in-flight.
@@ -206,6 +227,7 @@ class Processor (object):
                                                         self.execute_stage,
                                                         self.memory_stage])
         valid_PC_coming_up = self.fetch_stage.is_valid_PC()
+        # valid_PC_coming_up = False
 
         return any_non_empty_buffers or any_stalls or valid_PC_coming_up
         
@@ -217,6 +239,9 @@ class Processor (object):
         a reference to the same buffer) instead of having copies named
         FetcherBuffer, etc.
         """
+
+        self.do_operand_forwarding()
+
         self.write_back_stage.write_back()
         self.memory_stage.do_memory_operation()
         self.execute_stage.execute(self.memory_stage.is_stalled)

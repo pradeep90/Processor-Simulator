@@ -44,9 +44,9 @@ class ExecuteStage(PipelineStage):
         npc = self.decoder_buffer.npc
         self.unstall()
 
-        # Check if operands are in the buffer
-        if (self.decoder_buffer.rs is not None and
-            self.decoder_buffer.rt is not None):
+        # Check if operand values are in the buffer
+        if (self.decoder_buffer.rs[1] is not None and
+            self.decoder_buffer.rt[1] is not None):
             self.executer_buffer.update({
                 'instr': instr,
                 'npc': npc,
@@ -56,6 +56,8 @@ class ExecuteStage(PipelineStage):
                 })
             self.decoder_buffer.clear()
         else:
+            print 'execute_R_instruction stall'
+            print 'self.decoder_buffer: ', self.decoder_buffer
             # Here, we should take care of operand fowarding
             self.stall()
         
@@ -66,8 +68,8 @@ class ExecuteStage(PipelineStage):
         npc = self.decoder_buffer.npc
         self.unstall()
 
-        # Check if operands are in the buffer.
-        if (self.decoder_buffer.rs is not None and
+        # Check if operand values are in the buffer.
+        if (self.decoder_buffer.rs[1] is not None and
             self.decoder_buffer.immediate is not None):
             # Immediate ALU operations
             if len (instr.opcode) == 4:

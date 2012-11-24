@@ -37,11 +37,6 @@ class DecodeStage(PipelineStage):
             return
 
         if instr.type == 'R':
-            print 'Made it clean'
-            print 'instr: ', instr
-            print 'instr.rt: ', instr.rt
-            print 'instr.rs: ', instr.rs
-            print 'instr.rd: ', instr.rd
             self.register_file.setClean(instr.rd)
         elif instr.type == 'I':
             if (instr.type == 'I' and instr.opcode in [
@@ -71,7 +66,6 @@ class DecodeStage(PipelineStage):
 
         
         self.fetcher_buffer.clear()
-        self.register_file.setDirty (instr.rd)
 
         self.decoder_buffer.update({
             'instr': instr,
@@ -81,6 +75,8 @@ class DecodeStage(PipelineStage):
                    if self.register_file.isClean (instr.rt) else None],
             'npc': npc,
             })
+        self.register_file.setDirty (instr.rd)
+
 
     def decode_I_instruction(self):
         """Return decoder_buffer given fetcher_buffer.
@@ -201,12 +197,14 @@ class DecodeStage(PipelineStage):
         Return decoder_buffer.
         """
         if is_executer_stalled or self.fetcher_buffer.instr is None: 
-            self.decoder_buffer.clear()
+            # self.decoder_buffer.clear()
             return
 
         if self.has_jumped:
             # I don't know the full impact of this. Hence a separate 'if'.
             self.has_jumped = False
+
+            # Flush the values already read, ie. insert a Bubble
             self.decoder_buffer.clear()
             return
 

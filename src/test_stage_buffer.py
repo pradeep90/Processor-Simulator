@@ -62,6 +62,13 @@ class StageBufferTest(unittest.TestCase):
         f2.clear()
         self.assertEqual(f1, f)
         self.assertEqual(f2, f)
+
+    def test_get_reg_val(self): 
+        self.stage_buffer['rd'] = [2, 7]
+        self.stage_buffer['rt'] = [4, None]
+        self.assertEqual(self.stage_buffer.get_reg_val(2), 7)
+        self.assertEqual(self.stage_buffer.get_reg_val(3), None)
+        self.assertEqual(self.stage_buffer.get_reg_val(4), None)
 	
 def get_suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(StageBufferTest)

@@ -10,6 +10,7 @@ from fetcher_buffer import FetcherBuffer
 from fetch_input_buffer import FetchInputBuffer
 from executer_buffer import ExecuterBuffer
 from decoder_buffer import DecoderBuffer
+from memory_buffer import MemoryBuffer
 
 class ProcessorTest(unittest.TestCase):
     
@@ -31,25 +32,37 @@ class ProcessorTest(unittest.TestCase):
         self.register_file = RegisterFile()
         self.processor = Processor.Processor(self.memory, 0)
 
-    # def test_execute_one_cycle(self): 
-    #     self.processor.execute_one_cycle()
-    #     print self.register_file
-    #     self.processor.print_buffers()
+    def test_execute_one_cycle(self): 
+        self.processor.execute_one_cycle()
+        print self.register_file
+        self.processor.print_buffers()
 
-    # def test_are_instructions_in_flight(self): 
-    #     self.assertFalse(self.processor.are_instructions_in_flight())
+    def test_are_instructions_in_flight(self): 
+        self.assertTrue(self.processor.are_instructions_in_flight())
 
-    #     self.processor.decode_stage.is_stalled = True
-    #     self.assertTrue(self.processor.are_instructions_in_flight())
-    #     self.processor.decode_stage.is_stalled = False
+        self.processor.decode_stage.is_stalled = True
+        self.assertTrue(self.processor.are_instructions_in_flight())
+        self.processor.decode_stage.is_stalled = False
 
-    #     self.processor.execute_one_cycle()
-    #     self.assertTrue(self.processor.are_instructions_in_flight())
+        self.processor.execute_one_cycle()
+        self.assertTrue(self.processor.are_instructions_in_flight())
 
-    # def test_execute_cycles(self): 
-    #     self.processor.execute_cycles(1)
-    #     print self.register_file
-    #     self.processor.print_buffers()
+    def test_execute_cycles(self): 
+        self.processor.execute_cycles(1)
+        print self.register_file
+        self.processor.print_buffers()
+
+    def test_do_operand_forwarding(self): 
+        self.processor.decoder_buffer = DecoderBuffer({'rs': [2, None]})
+        self.processor.executer_buffer = ExecuterBuffer({'rt': [2, 7]})
+        self.processor.do_operand_forwarding()
+        self.assertEqual(self.processor.decoder_buffer.rs, [2, 7])
+
+        self.processor.decoder_buffer = DecoderBuffer({'rs': [2, None]})
+        self.processor.executer_buffer = ExecuterBuffer()
+        self.processor.memory_buffer = MemoryBuffer({'rd': [2, 9]})
+        self.processor.do_operand_forwarding()
+        self.assertEqual(self.processor.decoder_buffer.rs, [2, 9])
 
     def test_all_intermediate_buffers_are_shared(self): 
         for i in xrange(1, 10):
@@ -116,28 +129,26 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(processor.execute_stage.num_stalls, 0)
         self.assertEqual(processor.memory_stage.num_stalls, 0)
 
-    # def test_operand_forwarding_R_and_R_instruction(self): 
-    #     instruction_list = [
-    #         'I ADDI R2 R2 3',
-    #         'I ADDI R3 R3 5',
-    #     # Filler
-    #         'I ADDI R6 R6 9',
-    #         'I ADDI R7 R7 9',
-    #         'I ADDI R8 R8 9',
-    #         'R ADD  R2 R3 R2',
-    #         'R ADD  R2 R3 R1',
-    #         ]
-    #         # # Later
-    #         # 'I SW  R1 R5 0',
-    #     instruction_list = [instruction_string.split()
-    #                         for instruction_string in instruction_list]
-    #     memory = Memory.Memory(instruction_list)
-    #     processor = Processor.Processor(memory, 0)
-    #     processor.start()
-    #     print 'CPI: ', processor.getCPI ()
-    #     self.assertEqual(processor.decode_stage.num_stalls, 0)
-    #     self.assertEqual(processor.execute_stage.num_stalls, 0)
-    #     self.assertEqual(processor.memory_stage.num_stalls, 0)
+    def test_operand_forwarding_R_and_R_instruction(self): 
+        instruction_list = [
+        #     'I ADDI R2 R2 3',
+        #     'I ADDI R3 R3 5',
+        # # Filler
+        #     'I ADDI R6 R6 9',
+        #     'I ADDI R7 R7 9',
+        #     'I ADDI R8 R8 9',
+            'R ADD  R2 R3 R2',
+            'R ADD  R2 R3 R1',
+            ]
+        instruction_list = [instruction_string.split()
+                            for instruction_string in instruction_list]
+        memory = Memory.Memory(instruction_list)
+        processor = Processor.Processor(memory, 0)
+        processor.start()
+        print 'CPI: ', processor.getCPI ()
+        self.assertEqual(processor.decode_stage.num_stalls, 0)
+        self.assertEqual(processor.execute_stage.num_stalls, 0)
+        self.assertEqual(processor.memory_stage.num_stalls, 0)
 
     def tearDown(self):
         pass

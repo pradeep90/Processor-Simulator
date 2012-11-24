@@ -67,3 +67,19 @@ class StageBuffer(object):
         """
         """
         return self.__str__() 
+
+    def get_reg_val(self, reg_label):
+        """Return value of register with reg_label if available.
+
+        Mainly used for operand forwarding.
+        """
+        for operand_label in ['rt', 'rd']:
+            our_val = self[operand_label]
+            print 'operand_label: ', operand_label
+            print 'our_val: ', our_val
+
+            if our_val is not None and our_val[0] == reg_label and our_val[1] is not None:
+                print 'in here'
+                return our_val[1]
+        return None
+
