@@ -58,7 +58,6 @@ class ExecuteStage(PipelineStage):
         else:
             print 'execute_R_instruction stall'
             print 'self.decoder_buffer: ', self.decoder_buffer
-            # Here, we should take care of operand fowarding
             self.stall()
         
     def execute_I_instruction(self):
@@ -92,13 +91,13 @@ class ExecuteStage(PipelineStage):
                            self.decoder_buffer ['immediate'])
                 self.decoder_buffer.clear()
 
-                # TODO: Why is rt here not of the form 
-                # [instr.rt, register value] like the
-                # others?
+                # Note: Why is rt here not of the form [instr.rt,
+                # register value] like the others? cos you don't care
+                # about the old value.
                 self.executer_buffer.update({
                     'instr': instr,
                     'npc': npc,
-                    'rt': instr.rt,
+                    'rt': [instr.rt, None],
                     'memaddr': memaddr
                     })
                 return

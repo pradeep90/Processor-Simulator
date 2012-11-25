@@ -106,7 +106,7 @@ class ExecuteStageTest(unittest.TestCase):
         executer_buffer = ExecuterBuffer({
             'instr': self.instr,
             'npc': self.decoder_buffer.npc,
-            'rt': self.instr.rt,
+            'rt': [5, None],
             'memaddr': 12,
             })
 

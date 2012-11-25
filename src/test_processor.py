@@ -64,6 +64,17 @@ class ProcessorTest(unittest.TestCase):
         self.processor.do_operand_forwarding()
         self.assertEqual(self.processor.decoder_buffer.rs, [2, 9])
 
+        
+    def test_do_operand_forwarding_MEM(self): 
+        self.processor.executer_buffer = ExecuterBuffer({'rt': [1, None]})
+        self.processor.memory_buffer = MemoryBuffer({'rt': [1, 3]})
+        self.processor.do_operand_forwarding()
+        self.assertEqual(self.processor.executer_buffer.rt, [1, 3])
+
+        self.processor.executer_buffer = ExecuterBuffer({'rt': [2, None]})
+        self.processor.do_operand_forwarding()
+        self.assertEqual(self.processor.executer_buffer.rt, [2, None])
+        
     def test_all_intermediate_buffers_are_shared(self): 
         for i in xrange(1, 10):
             processor = Processor.Processor(self.memory, 0)
@@ -103,40 +114,76 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(processor.decoder_buffer, DecoderBuffer())
         self.assertEqual(processor.fetcher_buffer, FetcherBuffer())
 
-    def test_operand_forwarding_ALU(self): 
+    def test_operand_forwarding_to_ALU(self): 
         # Expected output:
-        # R1 = 8, R4 = 8
-        # (R4) <- R5 = 9
-        # R2 <- (R1) = 9
+        # R4 = 8
+        # R1 <- 8
+        # R2 <- (R1) = 999
+        # (R1) <- R5 = 1234
         instruction_list = [
-            'I ADDI R5 R5 9',
+            'I ADDI R5 R5 1234',
             'I ADDI R2 R2 3',
             'I ADDI R3 R3 5',
             'I ADDI R4 R4 8',
             'I ADDI R6 R6 9',
             'R ADD  R2 R3 R1',
             'I LW  R1 R2 0',
+            'I SW  R1 R5 0',
             ]
-            # # Later
-            # 'I SW  R1 R5 0',
         instruction_list = [instruction_string.split()
                             for instruction_string in instruction_list]
         memory = Memory.Memory(instruction_list)
         processor = Processor.Processor(memory, 0)
+
+        processor.data_memory[8] = 999
+
         processor.start()
         print 'CPI: ', processor.getCPI ()
-        self.assertEqual(processor.decode_stage.num_stalls, 2)
+        self.assertEqual(processor.decode_stage.num_stalls, 0)
+        self.assertEqual(processor.execute_stage.num_stalls, 0)
+        self.assertEqual(processor.memory_stage.num_stalls, 0)
+        self.assertEqual(processor.register_file[1], 8)
+        self.assertEqual(processor.register_file[4], 8)
+        self.assertEqual(processor.data_memory[8], 1234)
+        self.assertEqual(processor.register_file[2], 999)
+
+    def test_operand_forwarding_to_MEM(self): 
+        # Expected output:
+        # R4 = 8
+        # R1 <- 8
+        # R2 <- (R1) = 999
+        # (R1) <- R2 = 999
+        instruction_list = [
+            'I ADDI R5 R5 1234',
+            'I ADDI R2 R2 3',
+            'I ADDI R3 R3 5',
+            'I ADDI R4 R4 8',
+            'I ADDI R6 R6 9',
+            'R ADD  R2 R3 R1',
+            'I LW  R1 R2 0',
+            'I SW  R1 R2 0',
+            ]
+        instruction_list = [instruction_string.split()
+                            for instruction_string in instruction_list]
+        memory = Memory.Memory(instruction_list)
+        processor = Processor.Processor(memory, 0)
+
+        processor.data_memory[8] = 999
+
+        processor.start()
+        print 'CPI: ', processor.getCPI ()
+        self.assertEqual(processor.decode_stage.num_stalls, 0)
         self.assertEqual(processor.execute_stage.num_stalls, 0)
         self.assertEqual(processor.memory_stage.num_stalls, 0)
 
+        self.assertEqual(processor.register_file[1], 8)
+        self.assertEqual(processor.register_file[4], 8)
+        self.assertEqual(processor.register_file[2], 999)
+        self.assertEqual(processor.data_memory[8], 999)
+
+
     def test_operand_forwarding_R_and_R_instruction(self): 
         instruction_list = [
-        #     'I ADDI R2 R2 3',
-        #     'I ADDI R3 R3 5',
-        # # Filler
-        #     'I ADDI R6 R6 9',
-        #     'I ADDI R7 R7 9',
-        #     'I ADDI R8 R8 9',
             'R ADD  R2 R3 R2',
             'R ADD  R2 R3 R1',
             ]

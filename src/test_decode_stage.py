@@ -93,10 +93,14 @@ class DecodeStageTest(unittest.TestCase):
     def test_decode_I_instruction_funct_and_load_dirty_reg(self): 
         self.set_up_decode_stage('I ADDI R1 R1 1')
         self.register_file.setDirty(self.instr.rs)
-        decoder_buffer = DecoderBuffer()
+        decoder_buffer = DecoderBuffer({
+            'rt': None, 'rs': [1, None], 
+            'instr': Instruction.Instruction('I ADDI R1 R1 1'.split()), 'npc': 4, 
+            'PC': None, 'immediate': 1
+            })
         self.decode_stage.decode_I_instruction()
 
-        self.assertTrue(self.decode_stage.is_stalled)
+        self.assertFalse(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
         self.assertTrue(self.register_file.isDirty(self.instr.rt))
@@ -125,13 +129,19 @@ class DecodeStageTest(unittest.TestCase):
     def test_decode_I_instruction_store_and_branch_dirty_reg(self): 
         self.set_up_decode_stage('I BEQ  R2 R5 4')
         self.register_file.setDirty(self.instr.rs)
-        decoder_buffer = DecoderBuffer()
+        decoder_buffer = DecoderBuffer({
+            'rt': [5, 0], 'rs': [2, None], 
+            'instr': Instruction.Instruction('I BEQ R2 R5 4'.split()), 
+            'npc': 4, 
+            'PC': None, 
+            'immediate': 4
+            })
 
         self.decode_stage.decode_I_instruction()
-        self.assertTrue(self.decode_stage.is_stalled)
+        self.assertFalse(self.decode_stage.is_stalled)
         self.assertEqual(self.decode_stage.decoder_buffer,
                          decoder_buffer)
-        self.assertEqual(self.decode_stage.fetcher_buffer, self.fetcher_buffer)
+        self.assertEqual(self.decode_stage.fetcher_buffer, FetcherBuffer())
 
     def test_get_jump_address(self): 
         instruction_string = 'J J    3'

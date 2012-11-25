@@ -106,34 +106,28 @@ class DecodeStage(PipelineStage):
         # I type load: rt <- mem [imm (rs)]
         if (instr.type == 'I' and instr.opcode in [
                 'ADDI', 'ANDI', 'ORI', 'XORI', 'LB', 'LW']):
-            if self.register_file.isClean (instr.rs):
-                self.fetcher_buffer.clear()
-                self.register_file.setDirty (instr.rt)
-                self.decoder_buffer.update({
-                    'instr': instr,
-                    'rs': [instr.rs, self.register_file [instr.rs]],
-                    'npc': npc,
-                    'immediate': instr.immediate
-                    })
-            else:
-                self.stall()
-                self.register_file.setDirty (instr.rt)
+            self.fetcher_buffer.clear()
+            self.decoder_buffer.update({
+                'instr': instr,
+                'rs': [instr.rs, self.register_file [instr.rs] 
+                       if self.register_file.isClean (instr.rs) else None],
+                'npc': npc,
+                'immediate': instr.immediate
+                })
+            self.register_file.setDirty (instr.rt)
         # I type store: mem [imm (rs)] <- rt
         # I type branch: jump to imm depending on comparison of rs and rt
         elif (instr.type == 'I' and instr.opcode in ['SB', 'BEQ', 'SW', 'BNE']):
-            if (self.register_file.isClean (instr.rs) and
-                self.register_file.isClean (instr.rt)):
-                self.fetcher_buffer.clear()
-                self.decoder_buffer.update({
-                    'instr': instr,
-                    'rs': [instr.rs, self.register_file [instr.rs]],
-                    'rt': [instr.rt, self.register_file [instr.rt]],
-                    'npc': npc,
-                    'immediate': instr.immediate
+            self.fetcher_buffer.clear()
+            self.decoder_buffer.update({
+                'instr': instr,
+                'rs': [instr.rs, self.register_file [instr.rs] 
+                       if self.register_file.isClean (instr.rs) else None],
+                'rt': [instr.rt, self.register_file [instr.rt] 
+                       if self.register_file.isClean (instr.rt) else None],
+                'npc': npc,
+                'immediate': instr.immediate
                 })
-            else:
-                print 'decode stall'
-                self.stall()
         
     @staticmethod
     def get_jump_address(npc, instr):

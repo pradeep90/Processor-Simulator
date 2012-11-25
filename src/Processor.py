@@ -195,9 +195,20 @@ class Processor (object):
     def do_operand_forwarding(self, ):
         """Forward operands if possible.
         """
-        # ALU
         # TODO: Be careful about this... check if it is an output reg
         # value or an input reg value... (Does that make sense?)
+
+        # MEM stage
+        for operand_label in ['rt']:
+            if (self.executer_buffer[operand_label] is not None 
+                and self.executer_buffer[operand_label][1] is None):
+
+                reg_label = self.executer_buffer[operand_label][0]
+                mem_forward_val = self.memory_buffer.get_reg_val(reg_label)
+                print 'mem_forward_val: ', mem_forward_val
+                self.executer_buffer[operand_label][1] = mem_forward_val
+
+        # ALU
         for operand_label in ['rs', 'rt']:
             if (self.decoder_buffer[operand_label] is not None 
                 and self.decoder_buffer[operand_label][1] is None):
