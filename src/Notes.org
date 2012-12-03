@@ -93,7 +93,7 @@
 **** Check for None and 'Waiting' separately.
 **** VVIP Operand forwarding should all be done before you start executing. otherwise, decode stage will only see the new contents of executer_buffer not the ones at the end of the previous cycle.
 *** check that it works and CPI decreases
-** branch prediction + BTB
+** TODO branch prediction + BTB
 *** Ch 2.3, pg 82 pp 110
 ** multiple functional units
 ** Tomasulo algo for out-of-order execution and shit
@@ -114,6 +114,7 @@
 *** Actual algo pg 101, pp 129
 ** Tomasulo with ROB
 *** pg 113 pp 141
+*** Clock ticking is required
 ** Branch Target Buffer
 *** pg 124 pp 152
 ** multi-issue
