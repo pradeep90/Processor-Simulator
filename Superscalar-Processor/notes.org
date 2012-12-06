@@ -1,0 +1,32 @@
+1. Variables in our instruction
+   - Op, Vj, Vk, Dest, Imm
+
+2. RS variables (defined on *Page 97* of 4th edition)
+   - Op, Qj, Qk, Vj, Vk, Addr, Busy
+
+3. Example of RS, ROB, and RegFile given on *Page 110* of 4th edition
+
+4. ROB variables (ROB is 1-indexed)
+   - Busy, Instr, State, Dest, Value
+
+5. RegFile variables
+   - ROB_index, Busy, Value
+
+6. Steps involved in instruction execution given on *Page 106* and *Page 113* of 4th edition
+
+7. Branch Speculation:
+   - In issue stage
+     - Set the speculative bit of entries after a branch instruction is inserted in the ROB
+       - we will keep a *speculation* variable *which will be set* once a branch is inserted into ROB
+       - all the entries (at all points of time) will have their speculative bit = speculation variable
+
+   - In commit stage, when a branch reaches the head of ROB
+     - flush all ROB entries if this branch is mispredicted (by checking the calculated address and the instruction of next instrution in ROB?) 
+       - *reset* the speculation varibale
+       - also, restart issuing instructions from the *correct address* (depending on branch taken or not taken)
+
+     - finish the branch if it is correctly predicted => reset the speculative bit in the successive instructions (until the next branch instruction?)
+       - *reset* the speculation variable
+
+
+#Devesh: Are we taking care of writing result for store operations only when we reach the head? This is because of branch speculation.

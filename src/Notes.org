@@ -105,16 +105,96 @@
 ***** Read operands - Wait until no data hazards, then read operands
 *** It tracks when operands are available, to minimize RAW hazards
 *** Introduces register renaming, to minimize WAW and WAR hazards
-**** Register renaming eliminates these hazards by renaming all destination registers, including those with a pend- ing read or write for an earlier instruction, so that the out-of-order write does not affect any instructions that depend on an earlier value of an operand. 
+**** Register renaming eliminates these hazards by renaming all destination registers, including those with a pending read or write for an earlier instruction, so that the out-of-order write does not affect any instructions that depend on an earlier value of an operand. 
 ****  Register renaming is provided by reservation stations, which buffer the operands of instructions waiting to issue.
 ***** The basic idea is that a reservation station fetches and buffers an operand as soon as it is available, eliminating the need to get the operand from a register.
 ***** In addition, pending instructions designate the reservation station that will provide their input.
 ***** Finally, when successive writes to a register overlap in execution, only the last one is actually used to update the register.
 ***** As instructions are issued, the register specifiers for pending operands are renamed to the names of the reservation station, which provides register renaming.
 *** Actual algo pg 101, pp 129
+**** Issue
+***** FP operation
+****** If source operand register values are available, get them and declare that you have the actual value. Else, get the RS tag.
+****** Set the RS r as busy
+****** Tell rd that r is going to compute its value
+***** Load
+****** Get address register value or tag
+****** set r.A <- imm
+****** r is busy
+****** rt is gonna get its value from r
+***** Store
+****** Get address register value or tag
+****** set r.A <- imm
+****** r is busy
+****** Get target register value or tag
+**** Execute
+***** FP
+****** when both source registers have their values, compute result
+***** Load Store Step 1
+****** when rs value is ready and r is at the head of Load-Store queue, calculate EA
+***** Load Step 2
+****** Read from Memory[EA]
+**** Write result
+***** FP or Load - r's execution is complete and CDB is available
+****** Broadcast result to all registers expecting value from r and set their tag as 0
+****** Do the same for every r whose source or target registers expect value from r.
+****** r is no longer busy
+***** Store
+****** Wait till r's execution is complete (i.e., EA has been calculated) and rt's value is available
+****** Write to memory
+****** r is no longer busy
 ** Tomasulo with ROB
 *** pg 113 pp 141
 *** Clock ticking is required
+*** Hardware speculation - 3 key ideas
+**** dynamic branch prediction
+**** speculation to allow execution of instructions before control dependences are resolved
+**** dynamic scheduling to deal with scheduling of different combinations of basic blocks.
+*** VVIP To extend Tomasulo's algorithm to support speculation, we must separate the bypassing of results among instructions, which is needed to execute an instruction speculatively, from the actual completion of an instruction.
+**** By making this separation, we can allow an instruction to execute and to bypass its results to other instructions, without allowing the instruction to perform any updates that cannot be undone, until we know that the instruction is no longer speculative.
+**** Update memory or register only when we know that the instruction is no longer speculative => Instruction commit
+*** The key idea behind implementing speculation is to allow instructions to execute out of order but to force them to commit in order and to prevent any irrevocable action (such as updating state or taking an exception) until an instruction commits. 
+*** ROB
+**** pass results among instructions that may be speculative
+**** provide additional registers like the RS of old
+**** it holds the value between completion and commitment
+**** Store buffer is integrated into the ROB
+*** Each entry in the ROB contains four fields:
+**** The instruction type field indicates whether the instruction is a branch (and has no destination result), a store (which has a memory address destination), or a register operation (ALU operation or load, which has register destinations).
+**** The destination field supplies the register number (for loads and ALU operations) or the memory address (for stores) where the instruction result should be written.
+**** The value field is used to hold the value of the instruction result until the instruction commits.
+**** We will see an example of ROB entries shortly.
+**** Finally, the ready field indicates that the instruction has completed execution, and the value is ready.
+** Execution steps
+*** Issue
+**** Get an instruction from the instruction queue.
+**** Issue the instruction if there is an empty reservation station and an empty slot in the ROB; send the operands to the reservation station if they are available in either the registers or the ROB.
+**** Update the control entries to indicate the buffers are in use.
+**** The number of the ROB entry allocated for the result is also sent to the reservation station, so that the number can be used to tag the result when it is placed on the CDB.
+**** If either all reservations are full or the ROB is full, then instruction issue is stalled until both have available entries.
+*** Execute
+**** If one or more of the operands is not yet available, monitor the CDB while waiting for the register to be computed.
+**** This step checks for RAW hazards.
+**** When both operands are available at a reservation station, execute the operation.
+**** Instructions may take multiple clock cycles in this stage, and loads still require two steps in this stage.
+**** Stores need only have the base register available at this step, since execution for a store at this point is only effective address calculation.
+*** Write result
+**** When the result is available, write it on the CDB (with the ROB tag sent when the instruction issued) and from the CDB into the ROB, as well as to any reservation stations waiting for this result.
+**** Mark the reservation station as available.
+**** Special actions are required for store instructions.
+**** If the value to be stored is available, it is written into the Value field of the ROB entry for the store.
+**** If the value to be stored is not available yet, the CDB must be monitored until that value is broadcast, at which time the Value field of the ROB entry of the store is updated.
+**** For simplicity we assume that this occurs during the Write Results stage of a store; we discuss relaxing this requirement later.
+*** Commit
+**** This is the final stage of completing an instruction, after which only its result remains.
+**** (Some processors call this commit phase "completion" or "graduation.")
+**** There are three different sequences of actions at commit depending on whether the committing instruction is a branch with an incorrect prediction, a store, or any other instruction (normal commit).
+**** The normal commit case occurs when an instruction reaches the head of the ROB and its result is present in the buffer; at this point, the processor updates the register with the result and removes the instruction from the ROB.
+**** Committing a store is similar except that memory is updated rather than a result register.
+**** When a branch with incorrect prediction reaches the head of the ROB, it indicates that the speculation was wrong.
+**** The ROB is flushed and execution is restarted at the correct successor of the branch. If the branch was correctly predicted, the branch is finished.
+** Execution Module
+*** Input: Instruction Queue
 ** Branch Target Buffer
 *** pg 124 pp 152
 ** multi-issue

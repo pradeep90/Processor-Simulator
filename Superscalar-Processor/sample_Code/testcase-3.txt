@@ -1,0 +1,100 @@
+         Mips Integer Matrix Multiplication program.
+
+Source code
+
+# void multiplication(int x[][], int y[][], int z[][], int n)
+# // Inputs:	x,y,z are n X n matrices.
+# z is modified, so that z = x * y
+#      {
+#        int i,j;
+#        for (i=0; i != n; i++)
+#	     for (j=0; j != n; j++)
+#	         z[i][j] = 0;
+#		 for (k=0; k != n; k++)
+#	             z[i][j] = z[i][j] + x[i][k] * y[k][j];
+#      }
+
+
+Requirements : 
+----------------
+	Base address of X is contained in R4.
+                        Y                 R5.
+                        Z                 R6.
+ 
+	value n is contained in R7. 
+Memory is considered as byte addressable. Interger occupies 4 bytes of data. 
+
+	
+Temporary Registers used:
+------------------------
+			$R16,$R17,$R18 $R8-$R14
+
+
+Assembly Code : 
+----------------
+
+PC     INSTRUCTION
+
+0		sub	$R16,$R16,$R16		# i = 0
+1	L1:	sub	$R17,$R17,$R17		# j = 0
+2	L2:	sub	$R18,$R18,$R18		# k = 0
+3		sub	$R11,$R11,$R11		# z[i][j] = 0
+	inner:	
+4		mul	$R8,$R16,$R7		#  -- i*n
+5		add	$R9,$R8,$R18		# i*n+k
+6		sll	$R9,$R9,2		# 4*(i*n+k)             // memory is byte addressable 
+7		add	$R10,$R4,$R9		# address of x[i][k]
+8		lw	$R12,0($R10)		# load x[i][k]
+9		mul	$R8,$R18,$R7		# j*n
+10		add	$R9,$R8,$R17		# k*n+j
+11		sll	$R9,$R9,2		# 4*(k*n+j)     	// memory is byte addressable 
+12		add	$R10,$R9,$R5		# address of y[k][j]
+13		lw	$R13,0($R10)		# load y[k][j]
+14		mul	$R14,$R12,$R13		# x[i][k] * y[k][j]
+15		add	$R11,$R11,$R14		# z[i][j] = z[i][j] + x[i][k] * y[k][j]
+16		addi    $R18,$R18,1		# k++ and test inner loop condition
+17		bne	$R18,$R7,inner		#
+18		mul	$R8,$R16,$R7		# k*n
+19		add	$R9,$R8,$R17		# i*n+j
+20		sll	$R9,$R9,2		# 4*(i*n+j)             // memory is byte addressable 
+21		add $R10,$R9,$R6		# address of z[i][j]
+22		sw	$R11,0($R10)		# store z[i][j]
+23		addi$R17,$R17,1			# j++ and test loop condition
+24		bne	$R17,$R7,L2		# end of inner loop L2
+25		addi$R16,$R16,1			# i++ and test loop condition
+26		bne	$R16,$R7,L1		# end of outer loop L1
+
+
+
+Machine Code :: 
+--------------- 
+02108022
+02318822
+02529022
+016B5822
+02074018
+01124820
+00094880
+00895020
+8D4C0000
+02474018
+01114820
+00094880
+01255020
+8D4D0000
+018D7018
+016e5820
+22520001
+16470004
+02074018
+01114820
+00094880
+01265020
+AD4B0000
+22310001
+16270002
+22100001
+16070001
+
+
+
