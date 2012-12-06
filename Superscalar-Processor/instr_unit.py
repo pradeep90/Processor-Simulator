@@ -1,8 +1,10 @@
 import sys
-class InstrUnit:
+from pprint import pprint
+
+class InstrUnit(object):
 
     def __init__(self, init_PC, instruction_cache, controller,
-            instr_queue, npc_line):
+            instr_queue, npc_line, IntRegisterFile, FPRegisterFile):
         self.controller = controller
         self.instr_queue = instr_queue
         self.index_error_count = 0
@@ -14,7 +16,7 @@ class InstrUnit:
         self.npc = npc_line
 
         self._opcode_dict = dict()
-        self.initializeOpcodeDict()
+        self.initialize_opcode_dict()
 
         self.current_instr = {'Op':'',\
                               'PC':'',\
@@ -24,10 +26,16 @@ class InstrUnit:
                               'Imm':'',\
                               }
 
-    def triggerClock(self):
+        self.IntRegisterFile = IntRegisterFile
+        self.FPRegisterFile = FPRegisterFile
+
+    def trigger_clock(self):
         if len(self.instr_queue) <= 10:
-            self._fetchInstruction()
-            self._decodeInstr()
+            ret_val = self._fetch_instruction()
+            if ret_val == -77:
+                return -77
+            print 'trigger_clock ret_val: ', ret_val
+            self._decode_instr()
             self.current_instr['PC'] = self.PC
             print "--------------------", self.current_instr, "--------------------"
             self.instr_queue.append(self.current_instr)
@@ -35,13 +43,13 @@ class InstrUnit:
             print "Do something for this!"
             sys.exit(1)
     
-    def _getData(self):
+    def _get_data(self):
         return self.write_buffer['IR'].strip('\n')
         pass
 
-    def _decodeInstr(self):
+    def _decode_instr(self):
         try:
-            instruction = int(self._getData(), 16)
+            instruction = int(self._get_data(), 16)
         except ValueError:
             return
 
@@ -49,10 +57,10 @@ class InstrUnit:
 
         operation = self._opcode_dict[instruction/2**26]
         self.currentOperation = operation
-        self._writeData(instruction, operation)
+        self._write_data(instruction, operation)
         return
 
-    def _fetchInstruction(self):
+    def _fetch_instruction(self):
         return_value = 0
         self.PC = self.npc[0]
         try:
@@ -61,8 +69,13 @@ class InstrUnit:
         except:
             self.index_error_count += 1
             if self.index_error_count == 5:
-                sys.exit(1);
-                return 1
+                print 'Bye bye'
+                print 'self.FPRegisterFile: '
+                pprint(self.FPRegisterFile)
+                print 'self.IntRegisterFile: '
+                pprint(self.IntRegisterFile)
+                # sys.exit(1);
+                return -77
             else: 
                 self.write_buffer['IR'] = '0x00000000'
                 # print "Finishing program in", 5 - self.index_error_count
@@ -73,7 +86,7 @@ class InstrUnit:
 
         return return_value
 
-    def _writeData(self, instruction, operation):
+    def _write_data(self, instruction, operation):
         self.current_instr['Op'] = operation
 
         self.function = instruction % 2**6
@@ -106,7 +119,7 @@ class InstrUnit:
         self.rd = rd
 
         if operation == 'Special-Delta':
-            self._setIntOp(operation)
+            self._set_int_op(operation)
             if self.current_instr['Op'] == 'SLL':
                 self.current_instr['Vj'] = rt
                 self.current_instr['Imm'] = mid_20_bits%(2**5)
@@ -124,7 +137,7 @@ class InstrUnit:
 
         return
 
-    def _setIntOp(self, operation):
+    def _set_int_op(self, operation):
         self.current_instr['Op'] = ''
         if self.function == int('100000', 2):
             # ADD funct
@@ -157,7 +170,7 @@ class InstrUnit:
             # SLL funct
             self.current_instr['Op'] = 'SLL'
 
-    def _setFPOp(self, format, operation):
+    def _set_fp_op(self, format, operation):
         # TODO: GET THE CORRECT VALUES
         self.current_instr['Op'] = ''
         if format == int('100000', 2):
@@ -187,7 +200,7 @@ class InstrUnit:
                 # DIV funct
                 self.current_instr['Op'] = 'DIV.D'
 
-    def initializeOpcodeDict(self):
+    def initialize_opcode_dict(self):
         self._opcode_dict[0] = 'Special-Delta'
         self._opcode_dict[2] = 'J'
         self._opcode_dict[3] = 'JAL'

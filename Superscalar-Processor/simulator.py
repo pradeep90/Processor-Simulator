@@ -1,4 +1,4 @@
-from Processor import Processor
+from processor import Processor
 import sys
 
 def main():

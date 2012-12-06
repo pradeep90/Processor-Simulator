@@ -1,4 +1,4 @@
-class ROB:
+class ROB(object):
     """Class to simulate an ROB.""" 
 
     def __init__(self, max_size, CDB, IntRegisterFile, Memory, executer):
@@ -153,7 +153,7 @@ class ROB:
             npc = head_instr['Dest']
         else:
             npc = head_instr['Instr']['PC'] + 4
-        self.executer.resetFUAndPC(npc)
+        self.executer.reset_func_units_and_pc(npc)
         self.head = self.tail = self.size = 0
         self.printROB()
 

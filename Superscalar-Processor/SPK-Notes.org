@@ -33,20 +33,29 @@
 ** VVIP Note: Compilation buffer for Simulator.py has 13118 lines
 *** Now it is 12656 lines
 *** Now it is 6881 lines
-** ExeModule.py
+*** Now it is 6800 lines
+** DONE ExeModule.py
    CLOCK: [2012-12-06 Thu 15:21]--[2012-12-06 Thu 16:04] =>  0:43
    CLOCK: [2012-12-06 Thu 14:36]--[2012-12-06 Thu 15:21] =>  0:45
-*** TODO Change the name of the module and class
+*** DONE Change the name of the module and class
+*** DONE Add docstrings
+    CLOCK: [2012-12-06 Thu 23:01]--[2012-12-06 Thu 23:10] =>  0:09
+    CLOCK: [2012-12-06 Thu 22:33]--[2012-12-06 Thu 23:01] =>  0:28
+    CLOCK: [2012-12-06 Thu 22:03]--[2012-12-06 Thu 22:20] =>  0:17
+    CLOCK: [2012-12-06 Thu 21:29]--[2012-12-06 Thu 21:47] =>  0:18
 ** DONE func_unit.py
 *** DONE Unit tests
     CLOCK: [2012-12-06 Thu 16:04]--[2012-12-06 Thu 17:20] =>  1:16
 *** DONE Change CompFunc name
-** TODO load_store_unit.py
+** DONE load_store_unit.py
    CLOCK: [2012-12-06 Thu 19:43]--[2012-12-06 Thu 20:14] =>  0:31
    CLOCK: [2012-12-06 Thu 17:20]--[2012-12-06 Thu 18:47] =>  1:27
-*** TODO Clean up execute()
+*** DONE Clean up execute()
 ** DONE ROB.py
 *** DONE Add docstrings
     CLOCK: [2012-12-06 Thu 20:18]--[2012-12-06 Thu 21:21] =>  1:03
 *** DONE Change every '10' to ROB_MAX_SIZE
-** 
+** Check output
+   CLOCK: [2012-12-06 Thu 23:10]--[2012-12-06 Thu 23:50] =>  0:40
+** TODO Move execution stages into different classes
+** Rename write_data_to_CDB to write_results-*

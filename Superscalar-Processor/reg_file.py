@@ -1,4 +1,4 @@
-class RegFile:
+class RegFile(object):
     def __init__(self, size):
         self.registers = [{
             'Value': 0, 

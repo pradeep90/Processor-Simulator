@@ -3,10 +3,11 @@ import time
 from collections import defaultdict
 
 from reg_file import RegFile
-from InstrUnit import InstrUnit
+from instr_unit import InstrUnit
 from exe_module import ExeModule
+from pprint import pprint
 
-class Processor:
+class Processor(object):
     """ The super scalar MIPS Processor which will contain 
         all the modules.
     """
@@ -30,7 +31,9 @@ class Processor:
         self.instruction_fetcher = InstrUnit(0, instruction_cache,\
                                             self.controller,\
                                             self.instr_queue,\
-                                            self.npc_line)
+                                            self.npc_line,
+                                            self.IntRegisterFile,
+                                            self.FPRegisterFile)
 
         self.executor = ExeModule(self.FPRegisterFile, self.IntRegisterFile,\
                                   self.controller, self.instr_queue,\
@@ -45,8 +48,12 @@ class Processor:
     def run(self):
         while True:
             for module in self.modules:
-                ret_val = module.triggerClock()
-    
+                ret_val = module.trigger_clock()
+                if ret_val == -77:
+                    print 'Memory'
+                    pprint(dict(self.Memory))
+                    sys.exit(1)
+
     def setInitialState(self, initial_state_file):
         setting_reg = True
         for line in initial_state_file.readlines():

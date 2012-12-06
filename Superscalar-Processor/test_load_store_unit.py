@@ -4,7 +4,7 @@ import load_store_unit
 from exe_module import *
 from operations import *
 from pprint import pprint
-from ROB import ROB
+from rob import ROB
 import unittest
 
 class LoadStoreUnitTest(unittest.TestCase):
