@@ -2,7 +2,7 @@ import sys
 import time
 from collections import defaultdict
 
-from RegFile import RegFile
+from reg_file import RegFile
 from InstrUnit import InstrUnit
 from exe_module import ExeModule
 

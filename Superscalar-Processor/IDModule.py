@@ -1,4 +1,4 @@
-from RegFile import RegFile
+from reg_file import RegFile
 from IFModule import IFModule
 
 class IDModule:
