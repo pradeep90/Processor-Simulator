@@ -1,51 +1,27 @@
-import sys
-from pprint import pprint
+class DecodeStage(object):
+    """Decode Stage of the MIPS pipeline.
 
-class InstrUnit(object):
-
-    def __init__(self, init_PC, instruction_cache, controller,
-            instr_queue, npc_line, IntRegisterFile, FPRegisterFile):
-        self.controller = controller
-        self.instr_queue = instr_queue
-        self.index_error_count = 0
-        self.J_value = 0
-        self.instr_cache = instruction_cache
-        self.PC = init_PC
-        self.write_buffer = dict()
-        self.write_buffer['IR'] = ''
-        self.npc = npc_line
-
+    Decode the hex instruction into the appropriate operator and
+    operands.
+    """
+    
+    def __init__(self, fetch_buffer):
+        """Initialize the fetch_buffer.
+        """
+        self.fetch_buffer = fetch_buffer
         self._opcode_dict = dict()
         self.initialize_opcode_dict()
+        self.current_instr = {
+            'Op': '',
+            'PC': '',
+            'Vj': '',
+            'Vk': '',
+            'Dest': '',
+            'Imm': '',
+            }
 
-        self.current_instr = {'Op':'',\
-                              'PC':'',\
-                              'Vj':'',\
-                              'Vk':'',\
-                              'Dest':'',\
-                              'Imm':'',\
-                              }
-
-        self.IntRegisterFile = IntRegisterFile
-        self.FPRegisterFile = FPRegisterFile
-
-    def trigger_clock(self):
-        if len(self.instr_queue) <= 10:
-            ret_val = self._fetch_instruction()
-            if ret_val == -77:
-                return -77
-            print 'trigger_clock ret_val: ', ret_val
-            self._decode_instr()
-            self.current_instr['PC'] = self.PC
-            print "--------------------", self.current_instr, "--------------------"
-            self.instr_queue.append(self.current_instr)
-        else:
-            print "Do something for this!"
-            sys.exit(1)
-    
     def _get_data(self):
-        return self.write_buffer['IR'].strip('\n')
-        pass
+        return self.fetch_buffer['IR'].strip('\n')
 
     def _decode_instr(self):
         try:
@@ -59,32 +35,6 @@ class InstrUnit(object):
         self.currentOperation = operation
         self._write_data(instruction, operation)
         return
-
-    def _fetch_instruction(self):
-        return_value = 0
-        self.PC = self.npc[0]
-        try:
-            self.write_buffer['IR'] = self.instr_cache[self.PC/4]
-            self.index_error_count = 0
-        except:
-            self.index_error_count += 1
-            if self.index_error_count == 5:
-                print 'Bye bye'
-                print 'self.FPRegisterFile: '
-                pprint(self.FPRegisterFile)
-                print 'self.IntRegisterFile: '
-                pprint(self.IntRegisterFile)
-                # sys.exit(1);
-                return -77
-            else: 
-                self.write_buffer['IR'] = '0x00000000'
-                # print "Finishing program in", 5 - self.index_error_count
-                return_value = -1
-
-        #TODO: Branch Prediction.
-        self.npc[0] = self.PC + 4
-
-        return return_value
 
     def _write_data(self, instruction, operation):
         self.current_instr['Op'] = operation

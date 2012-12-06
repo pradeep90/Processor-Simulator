@@ -1,5 +1,6 @@
 # Helper functions
 
+ROB_MAX_SIZE = 10
 LOAD_SPECIAL_VAL = 1
 
 def mul(a, b):
