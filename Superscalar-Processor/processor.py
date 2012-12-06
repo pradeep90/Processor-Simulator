@@ -1,13 +1,19 @@
 import sys
 import time
 from collections import defaultdict
-
-from reg_file import RegFile
-from exe_module import ExeModule
-from pprint import pprint
-from fetch_stage import FetchStage
+from commit_stage import CommitStage
 from decode_stage import DecodeStage
+from execute_module import ExecuteModule
+from execute_stage import ExecuteStage
+from fetch_stage import FetchStage
+from func_unit import *
+from issue_stage import IssueStage
+from load_store_unit import *
 from operations import *
+from pprint import pprint
+from reg_file import RegFile
+from rob import ROB
+from write_stage import WriteStage
 
 class Processor(object):
     """Superscalar MIPS Processor containing all the stages."""
@@ -34,6 +40,11 @@ class Processor(object):
         
         self.set_initial_state(initial_state_file)
 
+        self.CDB = []
+        self.ROB = ROB(ROB_MAX_SIZE, self.CDB, self.IntRegisterFile, self.Memory, self)
+
+        self.execute_module = ExecuteModule(self.Memory, self.CDB, self.ROB)
+
         self.fetch_buffer = dict()
         self.fetch_buffer['IR'] = ''
 
@@ -42,12 +53,16 @@ class Processor(object):
                                       instruction_cache)
 
         self.decode_stage = DecodeStage(self.fetch_buffer)
-
-        self.executor = ExeModule(self.FPRegisterFile, self.IntRegisterFile,
-                                  self.controller, self.instr_queue,
-                                  self.Memory, self.npc_line)
         
-        self.modules = [self.executor,]
+        self.issue_stage = IssueStage(self.ROB, self.instr_queue,
+                                      self.IntRegisterFile, self.FPRegisterFile, 
+                                      self.execute_module)
+        self.write_stage = WriteStage(self.execute_module)
+        self.commit_stage = CommitStage(self.ROB)
+        self.execute_stage = ExecuteStage(self.execute_module, self.CDB, self.ROB)
+        
+        self.modules = [self.issue_stage, self.execute_stage, 
+                        self.write_stage, self.commit_stage]
 
         self.num_of_instructions = 0
         self.num_of_cycles = 0
@@ -64,8 +79,7 @@ class Processor(object):
                 if ret_val == -77:
                     self.print_final_output()
 
-                # TODO: change this to trigger_clock
-                self.decode_stage._decode_instr()
+                self.decode_stage.trigger_clock()
                 self.print_curr_instr()
                 self.instr_queue.append(self.decode_stage.current_instr)
             else:
@@ -121,3 +135,13 @@ class Processor(object):
         """
         print "-" * 20, self.decode_stage.current_instr, "-" * 20
 
+    def reset_func_units_and_pc(self, npc):
+        """Reset all the FuncUnits and the PC.""" 
+        self.npc_line[0] = npc
+
+        self.execute_module.FP_ADD = FuncUnit(2, self.CDB, 3)
+        self.execute_module.FP_MUL = FuncUnit(3, self.CDB, 2)
+        self.execute_module.BranchFU = FuncUnit(1, self.CDB, 3)
+        self.execute_module.Int_Calc = FuncUnit(1, self.CDB, 5)
+        self.execute_module.LoadStore = LoadStoreUnit(self.Memory, self.CDB, self.ROB, 4)
+        self.execute_module.load_step_1_done = False

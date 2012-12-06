@@ -23,13 +23,11 @@ class DecodeStage(object):
     def _get_data(self):
         return self.fetch_buffer['IR'].strip('\n')
 
-    def _decode_instr(self):
+    def trigger_clock(self):
         try:
             instruction = int(self._get_data(), 16)
         except ValueError:
             return
-
-        # print hex(instruction), bin(instruction)
 
         operation = self._opcode_dict[instruction/2**26]
         self.currentOperation = operation

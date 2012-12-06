@@ -19,3 +19,5 @@ class ExecuteModule(object):
         self.BranchFU = FuncUnit(1, self.CDB, 3)
         self.Int_Calc = FuncUnit(1, self.CDB, 5)
         self.LoadStore = LoadStoreUnit(self.Memory, self.CDB, self.ROB, 4)
+        self.load_step_1_done = False
+

@@ -14,7 +14,7 @@ class IssueStage(object):
         self.FPRegisterFile = FPRegisterFile
         self.execute_module = execute_module
         
-    def _issue(self):
+    def trigger_clock(self):
         """Issue one instruction.
 
         Fill out the RS entry and issue it to the appropriate FU. 
@@ -100,7 +100,7 @@ class IssueStage(object):
         if curr_instr['Op'] in ['LB', 'LW', 'LD']:
             # TODO implementing LB and LW?
             RF = self.IntRegisterFile
-            FU = self.LoadStore
+            FU = self.execute_module.LoadStore
             temp_RS_entry['func'] = is_load
             temp_RS_entry['A'] = curr_instr['Imm']
             temp_RS_entry['ROB_index'] = self.ROB.tail + 1
@@ -115,18 +115,18 @@ class IssueStage(object):
             isStore = 1
             temp_RS_entry['A'] = curr_instr['Imm']
             RF = self.IntRegisterFile
-            FU = self.LoadStore
+            FU = self.execute_module.LoadStore
         elif curr_instr['Op'] in ['ADD.D', 'ADD.S', 'SUB.D', 'SUB.S']:
             RF = self.FPRegisterFile
-            FU = self.FP_ADD
+            FU = self.execute_module.FP_ADD
             isInstrALU = 1
         elif curr_instr['Op'] in ['MUL.D', 'MUL.S', 'DIV.D', 'DIV.S']:
             RF = self.FPRegisterFile
-            FU = self.FP_MUL
+            FU = self.execute_module.FP_MUL
             isInstrALU = 1
         elif curr_instr['Op'] in ['ADD', 'SUB', 'MUL', 'DIV', 'AND', 'OR', 'XOR', 'NOR']:
             RF = self.IntRegisterFile
-            FU = self.Int_Calc
+            FU = self.execute_module.Int_Calc
             isInstrALU = 1
         else:
             print "----------------------------------------------------------------------------------------------------Wut!?"
@@ -177,7 +177,7 @@ class IssueStage(object):
         RF[curr_instr['Vk']]['Busy'] = True
         RF[curr_instr['Vk']]['ROB_index'] = self.ROB.tail + 1
 
-        FU = self.Int_Calc
+        FU = self.execute_module.Int_Calc
         return FU
 
     def _set_rs_entry_for_shift(self, curr_instr, temp_RS_entry):
@@ -186,7 +186,7 @@ class IssueStage(object):
         Get value or tag for source reg.
         """ 
         RF = self.IntRegisterFile
-        FU = self.Int_Calc
+        FU = self.execute_module.Int_Calc
 
         if curr_instr['Op'] == 'SLL':
             temp_RS_entry['func'] = shift_left
@@ -205,7 +205,7 @@ class IssueStage(object):
         Return FuncUnit to be issued to.
         """ 
         RF = self.IntRegisterFile
-        FU = self.BranchFU
+        FU = self.execute_module.BranchFU
 
         if curr_instr['Op'] == 'BNE':
             temp_RS_entry['func'] = not_equal_to
