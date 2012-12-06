@@ -21,23 +21,30 @@ class DecodeStage(object):
             }
 
     def _get_data(self):
+        """Return the hex instruction fetched.
+        """ 
         return self.fetch_buffer['IR'].strip('\n')
 
     def trigger_clock(self):
+        """Run DecodeStage for one cycle.
+
+        Decode the operation and the other fields of the instruction.
+        """ 
         try:
             instruction = int(self._get_data(), 16)
         except ValueError:
             return
 
-        operation = self._opcode_dict[instruction/2**26]
-        self.currentOperation = operation
-        self._write_data(instruction, operation)
-        return
+        self._write_data(instruction)
 
-    def _write_data(self, instruction, operation):
+    def _write_data(self, instruction):
+        """Get Imm, Vj, Vk, and Dest fields from instruction.
+        """ 
+        operation = self._opcode_dict[instruction/2**26]
         self.current_instr['Op'] = operation
 
         self.function = instruction % 2**6
+
         offset = instruction % 2**26
         self.new_offset = 4*offset
         mid_20_bits = offset/2**6
@@ -83,9 +90,9 @@ class DecodeStage(object):
         if self.current_instr['Op'] in ['ADDI', 'XORI', 'ORI', 'ANDI']:
             self.current_instr['Dest'] = rt
 
-        return
-
     def _set_int_op(self, operation):
+        """Set Op based on the last 6 bits of the instruction.
+        """ 
         self.current_instr['Op'] = ''
         if self.function == int('100000', 2):
             # ADD funct
@@ -117,38 +124,10 @@ class DecodeStage(object):
         if self.function == int('000000', 2):
             # SLL funct
             self.current_instr['Op'] = 'SLL'
-
-    def _set_fp_op(self, format, operation):
-        # TODO: GET THE CORRECT VALUES
-        self.current_instr['Op'] = ''
-        if format == int('100000', 2):
-            if self.function == int('000000', 2):
-                # ADD funct
-                self.current_instr['Op'] = 'ADD.S'
-            if self.function == int('000001', 2):
-                # SUB funct
-                self.current_instr['Op'] = 'SUB.S'
-            if self.function == int('000010', 2):
-                # MUL funct
-                self.current_instr['Op'] = 'MUL.S'
-            if self.function == int('000011', 2):
-                # DIV funct
-                self.current_instr['Op'] = 'DIV.S'
-        elif format == int('000011', 2):
-            if self.function == int('000000', 2):
-                # ADD funct
-                self.current_instr['Op'] = 'ADD.D'
-            if self.function == int('000001', 2):
-                # SUB funct
-                self.current_instr['Op'] = 'SUB.D'
-            if self.function == int('000010', 2):
-                # MUL funct
-                self.current_instr['Op'] = 'MUL.D'
-            if self.function == int('000011', 2):
-                # DIV funct
-                self.current_instr['Op'] = 'DIV.D'
-
+    
     def initialize_opcode_dict(self):
+        """Initialize mapping from first 6 bits to opcode type.
+        """ 
         self._opcode_dict[0] = 'Special-Delta'
         self._opcode_dict[2] = 'J'
         self._opcode_dict[3] = 'JAL'

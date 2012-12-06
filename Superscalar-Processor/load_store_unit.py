@@ -31,7 +31,7 @@ class LoadStoreUnit(FuncUnit):
         for x in xrange(self.ROB.size):
             if (curr_ROB_entry + 1) != self.RS[RS_index]['ROB_index']:
                 if self.ROB.buffer[curr_ROB_entry]['Instr']['Op'] in ['SW', 'SB', 'SD']:
-                    print "BEWARE! errorFlag2 is being set!"
+                    # print "BEWARE! errorFlag2 is being set!"
                     errorFlag = True
                     break
                 curr_ROB_entry = (curr_ROB_entry + 1) % self.ROB.size
@@ -42,7 +42,8 @@ class LoadStoreUnit(FuncUnit):
             break
 
         if errorFlag is False:
-            print "Error flag false"
+            # print "Error flag false"
+            pass
         return not errorFlag
 
     def all_stores_ahead_have_diff_destn(self, RS_index):
@@ -53,7 +54,7 @@ class LoadStoreUnit(FuncUnit):
         while (curr_ROB_entry + 1) is not self.RS[RS_index]['ROB_index']:
             if self.ROB.buffer[curr_ROB_entry]['Instr']['Op'] in ['SW', 'SB', 'SD']:
                 if self.ROB.buffer[curr_ROB_entry]['Dest'] == self.ROB.buffer[self.RS[RS_index]['ROB_index']]['Dest']:
-                    print "BEWARE! errorFlag is being set!"
+                    # print "BEWARE! errorFlag is being set!"
                     errorFlag = True
             curr_ROB_entry = curr_ROB_entry + 1 % self.ROB.size
 
@@ -78,23 +79,23 @@ class LoadStoreUnit(FuncUnit):
                 # perform a load
                 if not load_step_1_done:
                     # do step1 of load
-                    print 'doing step1 for', self.RS[i]
+                    # print 'doing step1 for', self.RS[i]
                     if self.RS[i]['Qj'] == 0 and self.no_stores_before_instrn_in_ROB(i):
                         self.RS[i]['A'] = self.RS[i]['A'] + self.RS[i]['Vj']
                         load_step_1_done = True
                 else:
-                    print 'doing step2 for', self.RS[i]
+                    # print 'doing step2 for', self.RS[i]
                     # do step2 of load
                     if self.all_stores_ahead_have_diff_destn(i):
                         self.mem_value_read = self.Memory[self.RS[i]['A']]
 
                         # Load finished. Memory load bus not busy anymore.
-                        # Ready to pop RS[i] in write_data_to_CDB function.
+                        # Ready to pop RS[i] in write_results_to_CDB function.
                         self.RS[i]['Busy'] = False      
 
                         load_step_1_done = False
                     
-                print "Step 1 value before return", load_step_1_done
+                # print "Step 1 value before return", load_step_1_done
                 return load_step_1_done
             else:
                 # perform a store
@@ -103,7 +104,7 @@ class LoadStoreUnit(FuncUnit):
                 
                 return False
 
-    def write_data_to_CDB(self):
+    def write_results_to_CDB(self):
         """Write result of ONE completed Load or Store into CDB.
 
         Remove that RS entry.
@@ -113,7 +114,7 @@ class LoadStoreUnit(FuncUnit):
             if self.RS[i]['func'](0, 0) == 1:
                 if self.RS[i]['Busy'] == False:
                     # do the following only for a load
-                    print "LOAD happened rob index", self.RS[i]['Dest']
+                    # print "LOAD happened rob index", self.RS[i]['Dest']
                     self.CDB.append([self.mem_value_read, self.RS[i]['Dest']])
                     self.RS.pop(i)
                     break
@@ -121,7 +122,7 @@ class LoadStoreUnit(FuncUnit):
             else:
                 # do the following only for a store
                 if not self.is_waiting_for_val(i):
-                    print "Making Value of ROB_index", self.RS[i]['Dest'], "with value", self.RS[i]['Vk']
+                    # print "Making Value of ROB_index", self.RS[i]['Dest'], "with value", self.RS[i]['Vk']
                     self.ROB.buffer[self.RS[i]['Dest'] - 1]['Value'] = self.RS[i]['Vk']
                     self.ROB.buffer[self.RS[i]['Dest'] - 1]['Ready'] = True
                     self.RS.pop(i)

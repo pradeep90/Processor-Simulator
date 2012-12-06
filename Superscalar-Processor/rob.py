@@ -17,6 +17,8 @@ class ROB(object):
         self.tail = 0
         self.IntRegisterFile = IntRegisterFile
 
+        self.num_commits = 0
+
         # ROB will be a list of dictionaries, each entry of which will
         # correspond to one instruction.
         # Buffer is a queue implemented in a fixed-size list.
@@ -59,7 +61,7 @@ class ROB(object):
         self.buffer[self.tail] = ROB_entry.copy()
         self.tail = (self.tail + 1) % self.max_size
         self.size += 1
-        print "ROB entry", ROB_entry
+        # print "ROB entry", ROB_entry
         return ROB_entry['ROB_index']
 
     def commitInstr(self):
@@ -77,7 +79,7 @@ class ROB(object):
         try:
             head_instr['Ready']
         except KeyError:
-            print "KeyError", 'instr is', head_instr
+            # print "KeyError", 'instr is', head_instr
             return
 
         #print 'commit checking', head_instr 
@@ -97,13 +99,15 @@ class ROB(object):
                     return
             else:
                 self.handle_integer_instruction()
-            print 
+
+            # print 
 
             # We can use this entry for newer instructions.
             head_instr['Busy'] = False
             # Update head
             self.head = (self.head + 1) % self.max_size
             self.size -= 1
+            self.num_commits += 1
 
         self.printROB()
 
@@ -167,10 +171,11 @@ class ROB(object):
         if self.IntRegisterFile[head_instr['Dest']]['ROB_index'] == self.head + 1:
             # Check the destination reg's ROB_index cos it might be
             # getting its value from some newer ROB instruction
-            print 'Int rf ', head_instr['Dest'], ' is set to value ',\
-                             head_instr['Value'], 'becos the rf rob index is ',\
-                             self.IntRegisterFile[head_instr['Dest']]['ROB_index'],\
-                             ' and head index is ', (self.head + 1)
+
+            # print 'Int rf ', head_instr['Dest'], ' is set to value ',\
+            #                  head_instr['Value'], 'becos the rf rob index is ',\
+            #                  self.IntRegisterFile[head_instr['Dest']]['ROB_index'],\
+            #                  ' and head index is ', (self.head + 1)
             self.IntRegisterFile[head_instr['Dest']]['Value'] = head_instr['Value']
             self.IntRegisterFile[head_instr['Dest']]['Busy'] = False
 
@@ -185,13 +190,13 @@ class ROB(object):
     def update(self):
         """Update all ROB entries with results from CDB.""" 
         #TODO: CHECK currect state change.
-        print "ROB update called"
+        # print "ROB update called"
         for CDB_elem in self.CDB:
             index = CDB_elem[1] - 1
             if (self.buffer[index]['Busy'] == True and self.buffer[index]['Ready'] == False):
                 self.buffer[index]['Ready'] = True
                 self.buffer[index]['Value'] = CDB_elem[0]
-                print 'Setting ROB_index ', CDB_elem[1], 'with value ' , self.buffer[index]['Value']
+                # print 'Setting ROB_index ', CDB_elem[1], 'with value ' , self.buffer[index]['Value']
 
     def flush_ROB(self):
         """Flush the ROB.""" 

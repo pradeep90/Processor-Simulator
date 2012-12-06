@@ -53,7 +53,7 @@ class IssueStage(object):
 
                 temp_RS_entry['Dest'] = self.ROB.tail + 1
                     
-                print "RS entry to be inserted:", temp_RS_entry
+                # print "RS entry to be inserted:", temp_RS_entry
                 
                 # checks internally if there is space in RS or not
                 RS_success = FU.insert_into_RS(temp_RS_entry) 
@@ -130,6 +130,7 @@ class IssueStage(object):
             isInstrALU = 1
         else:
             print "----------------------------------------------------------------------------------------------------Wut!?"
+            pass
     
         # TODO:  
         if isInstrALU is 1 or isStore is 1:

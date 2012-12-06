@@ -1,7 +1,7 @@
 from func_unit import *
 from load_store_unit import *
 
-class ExecuteModule(object):
+class ExecutionModule(object):
     """Class containing all the functional units used in Execution.
     """
     

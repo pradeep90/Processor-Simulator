@@ -76,19 +76,19 @@ class FuncUnitTest(unittest.TestCase):
         self.assertEqual(99, self.func_unit.RS[2]['Vj'])
         self.assertEqual(2724, self.func_unit.RS[4]['Vj'])
 
-    def test_write_data_to_CDB(self): 
+    def test_write_results_to_CDB(self): 
         op_elem_1 = [7, 8, 0, 0, add]
         op_elem_2 = [5, 5, 7, 0, sub]
         self.func_unit.op_queue = [op_elem_1, op_elem_2]
 
-        self.func_unit.write_data_to_CDB()
+        self.func_unit.write_results_to_CDB()
         self.assertEqual(1, self.func_unit.op_queue[1][3])
         self.assertEqual(1, self.func_unit.op_queue[0][3])
 
         op_elem_3 = [5, 5, 6, 0, sub]
         self.func_unit.op_queue.append(op_elem_3)
 
-        self.func_unit.write_data_to_CDB()
+        self.func_unit.write_results_to_CDB()
 
         self.assertEqual(1, len(self.func_unit.op_queue))
         self.assertEqual([[15, 0], [0, 7]], self.func_unit.CDB)

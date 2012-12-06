@@ -3,7 +3,7 @@ import time
 from collections import defaultdict
 from commit_stage import CommitStage
 from decode_stage import DecodeStage
-from execute_module import ExecuteModule
+from execution_module import ExecutionModule
 from execute_stage import ExecuteStage
 from fetch_stage import FetchStage
 from func_unit import *
@@ -25,7 +25,6 @@ class Processor(object):
         Create the stages - Fetch, Decode, and Execution.
         """ 
         self.npc_line = [0]
-        self.controller = dict()
         self.Memory = defaultdict(lambda:0)
         instruction_cache = hex_code_file.readlines()
         self.instr_queue = []
@@ -43,7 +42,7 @@ class Processor(object):
         self.CDB = []
         self.ROB = ROB(ROB_MAX_SIZE, self.CDB, self.IntRegisterFile, self.Memory, self)
 
-        self.execute_module = ExecuteModule(self.Memory, self.CDB, self.ROB)
+        self.execute_module = ExecutionModule(self.Memory, self.CDB, self.ROB)
 
         self.fetch_buffer = dict()
         self.fetch_buffer['IR'] = ''
@@ -73,22 +72,29 @@ class Processor(object):
         Stop when there are no more instructions or there is an error.
         Print state of the Processor at the end.
         """ 
+        self.num_of_cycles = 0
         while True:
+            self.num_of_cycles += 1
             if len(self.instr_queue) <= ROB_MAX_SIZE:
                 ret_val = self.fetch_stage.trigger_clock()
                 if ret_val == -77:
                     self.print_final_output()
+                    break
 
                 self.decode_stage.trigger_clock()
                 self.print_curr_instr()
                 self.instr_queue.append(self.decode_stage.current_instr)
             else:
                 # TODO:  
-                print "Do something for this!"
+                # print "Do something for this!"
                 sys.exit(1)
 
             for module in self.modules:
                 ret_val = module.trigger_clock()
+        
+        print 'self.num_of_cycles: ', self.num_of_cycles
+        print 'self.ROB.num_commits: ', self.ROB.num_commits
+        print 'CPI: ', self.num_of_cycles * 1.0 / self.ROB.num_commits
 
     # TODO: Make the inputs be Python code.
     def set_initial_state(self, initial_state_file):
@@ -127,13 +133,12 @@ class Processor(object):
         pprint(self.IntRegisterFile)
         print 'Memory'
         pprint(dict(self.Memory))
-        sys.exit(0)
-        
 
     def print_curr_instr(self, ):
         """Print the current instruction.
         """
-        print "-" * 20, self.decode_stage.current_instr, "-" * 20
+        # print "-" * 20, self.decode_stage.current_instr, "-" * 20
+        pass
 
     def reset_func_units_and_pc(self, npc):
         """Reset all the FuncUnits and the PC.""" 

@@ -46,7 +46,7 @@ class FuncUnit(object):
             if self.is_waiting_for_val(i):
                 self.update_RS_val(i)
 
-    def write_data_to_CDB(self):
+    def write_results_to_CDB(self):
         """Write results of completed instructions into CDB.
 
         Make sure that the appropriate FU latency has elapsed.
@@ -90,11 +90,11 @@ class FuncUnit(object):
             if CDB_elem[1] == qj:
                 self.RS[RS_index]['Qj'] = 0
                 self.RS[RS_index]['Vj'] = CDB_elem[0]
-                print 'somthing waiting on j = ', qj, ' is cleared.'
+                # print 'somthing waiting on j = ', qj, ' is cleared.'
             if CDB_elem[1] == qk:
                 self.RS[RS_index]['Qk'] = 0
                 self.RS[RS_index]['Vk'] = CDB_elem[0]
-                print 'somthing waiting on k = ', qk, ' is cleared.'
+                # print 'somthing waiting on k = ', qk, ' is cleared.'
 
     def update_op_queue_execution_time(self, op_queue_index):
         """Increment the execution time field for the in-flight instruction.
