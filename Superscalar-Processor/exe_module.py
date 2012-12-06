@@ -1,8 +1,11 @@
 import operator, copy
 from collections import defaultdict
-from FuncUnit import *
+from func_unit import *
 from load_store_unit import *
 from ROB import ROB
+from operations import *
+
+ROB_MAX_SIZE = 10
 
 def breakpoint () :
     try :
@@ -11,43 +14,6 @@ def breakpoint () :
     except :
         import code
         return code.interact(local=dict(globals(), **locals()))
-
-def mul(a, b):
-    return a*b
-
-def div(a, b):
-    return a/b
-
-def add(a, b):
-    return a+b
-
-def sub(a, b):
-    return a-b
-
-def and_func(a, b):
-    return a & b 
-
-def or_func(a, b):
-    return a | b
-
-def nor_func(a, b):
-    return ~ (a | b)
-
-def xor_func(a, b):
-    return a ^ b
-
-def shift_left(a, b):
-    return (a * (2**b))%(2**64)
-
-def is_load(a, b):
-    return 1
-
-def not_equal_to(a, b):
-    return int(a != b)
-
-def equal_to(a, b):
-    return int(a == b)
-
 class ExeModule:
     """Module for all the steps in Execution of an instruction.
 
@@ -57,22 +23,30 @@ class ExeModule:
     + Write Result
     + Commit
     """
-
-    def __init__(self, FPRegisterFile, IntRegisterFile, controller, instr_queue, Memory, npc_line):
+    
+    def __init__(self, FPRegisterFile, IntRegisterFile,
+                 controller, instr_queue, Memory, npc_line):
         """
-        
+        Create Execution Module using the various external components.
+
+        Create an ROB and functional units like:
+        + FP_ADD
+        + FP_MUL
+        + BranchFU
+        + Integer Calculation unit
+        + Load Store Unit
         """
         self.controller = controller
         self.instr_queue = instr_queue
         self.CDB = []
         self.npc_line = npc_line
-
+        
         self.FPRegisterFile = FPRegisterFile
         self.IntRegisterFile = IntRegisterFile
         self.Memory = Memory
-
-        self.ROB = ROB(10, self.CDB, self.IntRegisterFile, self.Memory, self)
-
+        
+        self.ROB = ROB(ROB_MAX_SIZE, self.CDB, self.IntRegisterFile, self.Memory, self)
+        
         # NOTE: If you add any func unit, also add it in reset function and 
         # update and write function.
         self.FP_ADD = FuncUnit(2, self.CDB, 3)
@@ -80,7 +54,9 @@ class ExeModule:
         self.BranchFU = FuncUnit(1, self.CDB, 3)
         self.Int_Calc = FuncUnit(1, self.CDB, 5)
         self.LoadStore = LoadStoreUnit(self.Memory, self.CDB, self.ROB, 4)
-        self.step1done = False
+
+        # TODO: WTF is this?
+        self.load_step_1_done = False
 
     def resetFUAndPC(self, npc):
         self.npc_line[0] = npc
@@ -90,7 +66,7 @@ class ExeModule:
         self.BranchFU = FuncUnit(1, self.CDB, 3)
         self.Int_Calc = FuncUnit(1, self.CDB, 5)
         self.LoadStore = LoadStoreUnit(self.Memory, self.CDB, self.ROB, 4)
-        self.step1done = False
+        self.load_step_1_done = False
 
     def triggerClock(self):
         # try:
@@ -106,7 +82,7 @@ class ExeModule:
         if len(self.instr_queue) > 0:
             RS_success = 0
             curr_instr = self.instr_queue[0]
-            temp_RS_entry = {'Busy':True, 'Vj':0, 'Vk':0, 'Qj':0, 'Qk':0, 'Dest':0, 'A':0, 'CompFunc': add}
+            temp_RS_entry = {'Busy':True, 'Vj':0, 'Vk':0, 'Qj':0, 'Qk':0, 'Dest':0, 'A':0, 'func': add}
 
             if self.ROB != self.ROB.tail or self.ROB.size == 0: # implies there is space in ROB
 
@@ -127,7 +103,7 @@ class ExeModule:
                 print "RS entry to be inserted:", temp_RS_entry
                 
                 # checks internally if there is space in RS or not
-                RS_success = FU.insertIntoRS(temp_RS_entry) 
+                RS_success = FU.insert_into_RS(temp_RS_entry) 
 
                 if RS_success < 0:
                     print "Insert Failed :( "
@@ -143,11 +119,11 @@ class ExeModule:
 
     def _execute(self):
         print "RS Updates being called"
-        self.FP_ADD.updateRS()
-        self.FP_MUL.updateRS()
-        self.Int_Calc.updateRS()
-        self.LoadStore.updateRS()
-        self.BranchFU.updateRS()
+        self.FP_ADD.update_RS()
+        self.FP_MUL.update_RS()
+        self.Int_Calc.update_RS()
+        self.LoadStore.update_RS()
+        self.BranchFU.update_RS()
 
         print "CDB print"
         print self.CDB
@@ -158,16 +134,16 @@ class ExeModule:
         self.FP_MUL.execute()
         self.Int_Calc.execute()
         self.BranchFU.execute()
-        print 'step1 value as arg', self.step1done
-        self.step1done = self.LoadStore.execute(self.step1done)
-        print 'step1 value returned', self.step1done
+        print 'step1 value as arg', self.load_step_1_done
+        self.load_step_1_done = self.LoadStore.execute(self.load_step_1_done)
+        print 'step1 value returned', self.load_step_1_done
 
     def _writeResult(self):
-        self.FP_ADD.writeDataToCDB()
-        self.FP_MUL.writeDataToCDB()
-        self.Int_Calc.writeDataToCDB()
-        self.LoadStore.writeDataToCDB()
-        self.BranchFU.writeDataToCDB()
+        self.FP_ADD.write_data_to_CDB()
+        self.FP_MUL.write_data_to_CDB()
+        self.Int_Calc.write_data_to_CDB()
+        self.LoadStore.write_data_to_CDB()
+        self.BranchFU.write_data_to_CDB()
 
 # Check each of the functional units, and if a result is available, write it 
 # on the CDB with the ROB tag. This will inturn write it to ROB entry and 
@@ -185,27 +161,27 @@ class ExeModule:
         isStore = 0
 
         if curr_instr['Op'] in ['ADD.D', 'ADD.S', 'ADD']:
-            temp_RS_entry['CompFunc'] = add
+            temp_RS_entry['func'] = add
         if curr_instr['Op'] in ['SUB.D', 'SUB.S', 'SUB']:
-            temp_RS_entry['CompFunc'] = sub
+            temp_RS_entry['func'] = sub
         if curr_instr['Op'] in ['MUL.D', 'MUL.S', 'MUL']:
-            temp_RS_entry['CompFunc'] = mul
+            temp_RS_entry['func'] = mul
         if curr_instr['Op'] in ['DIV.D', 'DIV.S', 'DIV']:
-            temp_RS_entry['CompFunc'] = div
+            temp_RS_entry['func'] = div
         if curr_instr['Op'] in ['OR']:
-            temp_RS_entry['CompFunc'] = or_func
+            temp_RS_entry['func'] = or_func
         if curr_instr['Op'] in ['AND']:
-            temp_RS_entry['CompFunc'] = and_func
+            temp_RS_entry['func'] = and_func
         if curr_instr['Op'] in ['XOR']:
-            temp_RS_entry['CompFunc'] = xor_func
+            temp_RS_entry['func'] = xor_func
         if curr_instr['Op'] in ['NOR']:
-            temp_RS_entry['CompFunc'] = nor_func
+            temp_RS_entry['func'] = nor_func
 
         if curr_instr['Op'] in ['LB', 'LW', 'LD']:
             # TODO implementing LB and LW?
             RF = self.IntRegisterFile
             FU = self.LoadStore
-            temp_RS_entry['CompFunc'] = is_load
+            temp_RS_entry['func'] = is_load
             temp_RS_entry['A'] = curr_instr['Imm']
             temp_RS_entry['ROB_index'] = self.ROB.tail + 1
 
@@ -293,15 +269,15 @@ class ExeModule:
         FU = self.Int_Calc
 
         if curr_instr['Op'] == 'ADDI':
-            temp_RS_entry['CompFunc'] = add
+            temp_RS_entry['func'] = add
         if curr_instr['Op'] == 'ANDI':
-            temp_RS_entry['CompFunc'] = and_func
+            temp_RS_entry['func'] = and_func
         if curr_instr['Op'] == 'ORI':
-            temp_RS_entry['CompFunc'] = or_func
+            temp_RS_entry['func'] = or_func
         if curr_instr['Op'] == 'XORI':
-            temp_RS_entry['CompFunc'] = xor_func
+            temp_RS_entry['func'] = xor_func
         if curr_instr['Op'] in ['NORI']:
-            temp_RS_entry['CompFunc'] = nor_func
+            temp_RS_entry['func'] = nor_func
 
         first_state = RF[curr_instr['Vj']]['Busy']
         first_ROB_index = RF[curr_instr['Vj']]['ROB_index']
@@ -328,7 +304,7 @@ class ExeModule:
         FU = self.Int_Calc
 
         if curr_instr['Op'] == 'SLL':
-            temp_RS_entry['CompFunc'] = shift_left
+            temp_RS_entry['func'] = shift_left
 
         first_state = RF[curr_instr['Vj']]['Busy']
         first_ROB_index = RF[curr_instr['Vj']]['ROB_index']
@@ -355,9 +331,9 @@ class ExeModule:
         FU = self.BranchFU
 
         if curr_instr['Op'] == 'BNE':
-            temp_RS_entry['CompFunc'] = not_equal_to
+            temp_RS_entry['func'] = not_equal_to
         elif curr_instr['Op'] == 'BEQ':
-            temp_RS_entry['CompFunc'] = equal_to
+            temp_RS_entry['func'] = equal_to
 
         first_state = RF[curr_instr['Vj']]['Busy']
         first_ROB_index = RF[curr_instr['Vj']]['ROB_index']

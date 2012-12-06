@@ -1,5 +1,8 @@
 class ROB:
+    """Class to simulate an ROB.""" 
+
     def __init__(self, max_size, CDB, IntRegisterFile, Memory, executer):
+        """Initialize an ROB of max_size with given references.""" 
         self.max_size = max_size
         self.CDB = CDB
         self.global_spec_counter = 0
@@ -10,6 +13,8 @@ class ROB:
         self.head = 0
         self.tail = 0
         self.IntRegisterFile = IntRegisterFile
+
+        # TODO: DANGEROUS code!!! Change it to [{} for i in xrange(max_size)]
         self.buffer = [dict()]*max_size # ROB will be a list of dictionaries, each entry of which will correspond to one instruction
         
     def insertInstr(self, instr):
@@ -23,6 +28,10 @@ class ROB:
         #     Commit takes care of which RegFile to write the result in
         # 'Value' gives the result of execution of this instruction; it is valid only when Ready bit is 1
         # If it is a branch instruction, we increment the global branch speculation variable.
+
+        # 'Dest': register number (for Loads and ALU ops) or memory
+        # address (for stores) where the instruction result must be
+        # written
         ROB_entry = {'ROB_index' : self.tail + 1, 'Busy' : True, 'Instr': instr.copy(), 'Ready' : False, 'Dest' : instr['Dest'], 'Value' : 0, 'Speculation' : (self.global_spec_counter > 0)}
         self.buffer[self.tail] = ROB_entry.copy()
         self.tail = (self.tail + 1) % self.max_size
