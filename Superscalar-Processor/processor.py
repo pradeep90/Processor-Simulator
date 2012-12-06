@@ -92,9 +92,9 @@ class Processor(object):
             for module in self.modules:
                 ret_val = module.trigger_clock()
         
-        print 'self.num_of_cycles: ', self.num_of_cycles
-        print 'self.ROB.num_commits: ', self.ROB.num_commits
-        print 'CPI: ', self.num_of_cycles * 1.0 / self.ROB.num_commits
+        # print 'self.num_of_cycles: ', self.num_of_cycles
+        # print 'self.ROB.num_commits: ', self.ROB.num_commits
+        # print 'CPI: ', self.num_of_cycles * 1.0 / self.ROB.num_commits
 
     # TODO: Make the inputs be Python code.
     def set_initial_state(self, initial_state_file):
