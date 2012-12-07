@@ -26,8 +26,8 @@ class Processor(object):
         """ 
         self.npc_line = [0]
         self.Memory = defaultdict(lambda:0)
-        instruction_cache = hex_code_file.readlines()
-        instruction_cache = file('human-code.txt', 'r').readlines()
+        # instruction_cache = hex_code_file.readlines()
+        instruction_cache = file('human-code-2.txt', 'r').readlines()
         self.instr_queue = []
         
         self.FPRegisterFile = [{'Value': i+1,
