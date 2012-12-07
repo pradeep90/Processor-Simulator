@@ -1,3 +1,5 @@
+from Instruction import Instruction
+
 class DecodeStage(object):
     """Decode Stage of the MIPS pipeline.
 
@@ -33,51 +35,71 @@ class DecodeStage(object):
         try:
             instruction = int(self._get_data(), 16)
         except ValueError:
-            return
+            pass
+            # return
 
-        self._write_data(instruction)
+        # self._write_data(instruction)
+        self._write_data(self._get_data())
 
     def _write_data(self, instruction):
         """Get Imm, Vj, Vk, and Dest fields from instruction.
         """ 
-        operation = self._opcode_dict[instruction/2**26]
+        if instruction == '0x00000000':
+            return
+
+        # print 'instruction: ', instruction
+        # # instr = Instruction(bin (int (str(instruction), 16)) [2:].zfill (32))
+        # print 'instruction.split(): ', instruction.split() 
+        instr = Instruction(instruction.split())
+        # print 'instr: ', instr
+
+        # operation = self._opcode_dict[instruction/2**26]
+        # self.current_instr['Op'] = operation
+
+        # self.function = instruction % 2**6
+
+        # offset = instruction % 2**26
+        # self.new_offset = 4*offset
+        # mid_20_bits = offset/2**6
+
+        # if operation == 'FP':
+        #     # print "going in"
+        #     format = mid_20_bits/2**15
+        #     rs = (mid_20_bits/2**5)%2**5
+        #     rt = (mid_20_bits/2**10)%2**5
+        #     rd = (mid_20_bits)%2**5
+        #     self._setFPOp(format, operation)
+        # else:
+        #     rs = mid_20_bits/2**15
+        #     rt = (mid_20_bits/2**10)%2**5
+        #     rd = (mid_20_bits/2**5)%2**5
+
+        operation = instr.opcode
         self.current_instr['Op'] = operation
 
-        self.function = instruction % 2**6
-
-        offset = instruction % 2**26
-        self.new_offset = 4*offset
-        mid_20_bits = offset/2**6
-
-        if operation == 'FP':
-            # print "going in"
-            format = mid_20_bits/2**15
-            rs = (mid_20_bits/2**5)%2**5
-            rt = (mid_20_bits/2**10)%2**5
-            rd = (mid_20_bits)%2**5
-            self._setFPOp(format, operation)
-        else:
-            rs = mid_20_bits/2**15
-            rt = (mid_20_bits/2**10)%2**5
-            rd = (mid_20_bits/2**5)%2**5
-
-        self.immediate_value = instruction % 2**16 # last 16 bits
+        # self.immediate_value = instruction % 2**16 # last 16 bits
+        self.immediate_value = instr.immediate
 
         self.current_instr['Imm'] = self.immediate_value
-        self.current_instr['Vj'] = rs
-        self.current_instr['Vk'] = rt
-        self.current_instr['Dest'] = rd
+        self.current_instr['Vj'] = instr.rs
+        self.current_instr['Vk'] = instr.rt
+        self.current_instr['Dest'] = instr.rd
 
         # print "Registers ", rs, rt, rd
-        self.rs = rs
-        self.rt = rt
-        self.rd = rd
+        self.rs = instr.rs
+        self.rt = instr.rt
+        self.rd = instr.rd
 
-        if operation == 'Special-Delta':
-            self._set_int_op(operation)
-            if self.current_instr['Op'] == 'SLL':
-                self.current_instr['Vj'] = rt
-                self.current_instr['Imm'] = mid_20_bits%(2**5)
+        # if operation == 'Special-Delta':
+        #     self._set_int_op(operation)
+        #     if self.current_instr['Op'] == 'SLL':
+        #         self.current_instr['Vj'] = rt
+        #         self.current_instr['Imm'] = mid_20_bits%(2**5)
+        if operation == 'SLL':
+            self.current_instr['Vj'] = self.rt
+            self.current_instr['Dest'] = self.rt
+            # self.current_instr['Imm'] = mid_20_bits%(2**5)
+            self.current_instr['Imm'] = self.immediate_value
 
         if operation in ['BEQ', 'BNE']:
             # This is how it should have been
@@ -86,9 +108,9 @@ class DecodeStage(object):
             self.current_instr['Dest'] = self.immediate_value*4
             # in order to run the given matrix multiplication code properly
         if operation in ['LW', 'LD', 'LB']:
-            self.current_instr['Dest'] = rt
+            self.current_instr['Dest'] = self.rt
         if self.current_instr['Op'] in ['ADDI', 'XORI', 'ORI', 'ANDI']:
-            self.current_instr['Dest'] = rt
+            self.current_instr['Dest'] = self.rt
 
     def _set_int_op(self, operation):
         """Set Op based on the last 6 bits of the instruction.

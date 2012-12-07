@@ -27,6 +27,7 @@ class Processor(object):
         self.npc_line = [0]
         self.Memory = defaultdict(lambda:0)
         instruction_cache = hex_code_file.readlines()
+        instruction_cache = file('human-code.txt', 'r').readlines()
         self.instr_queue = []
         
         self.FPRegisterFile = [{'Value': i+1,
@@ -84,6 +85,7 @@ class Processor(object):
                 self.decode_stage.trigger_clock()
                 self.print_curr_instr()
                 self.instr_queue.append(self.decode_stage.current_instr)
+                # print 'self.decode_stage.current_instr: ', self.decode_stage.current_instr
             else:
                 # TODO:  
                 # print "Do something for this!"
