@@ -27,14 +27,18 @@ class Processor(object):
         self.npc_line = [0]
         self.Memory = defaultdict(lambda:0)
         # instruction_cache = hex_code_file.readlines()
-        instruction_cache = file('human-code-2.txt', 'r').readlines()
+
+        # Get all non-empty lines
+        instruction_cache = [line.strip() for line in hex_code_file
+                             if line.strip()]
+        print 'instruction_cache: ', instruction_cache 
         self.instr_queue = []
         
         self.FPRegisterFile = [{'Value': i+1,
                                 'Busy': False,
                                 'ROB_index': 0} for i in xrange(10)]
         
-        self.IntRegisterFile = [{'Value': i,
+        self.IntRegisterFile = [{'Value': 0,
                                  'Busy': False,
                                  'ROB_index': 0} for i in xrange(32)]
         
@@ -93,6 +97,11 @@ class Processor(object):
 
             for module in self.modules:
                 ret_val = module.trigger_clock()
+            
+            # print 'self.IntRegisterFile: '
+            # # pprint(self.IntRegisterFile)
+            # for i, d in enumerate(self.IntRegisterFile):
+            #     print i, d
         
         # print 'self.num_of_cycles: ', self.num_of_cycles
         # print 'self.ROB.num_commits: ', self.ROB.num_commits

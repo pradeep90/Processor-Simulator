@@ -5,11 +5,12 @@ def main():
     try:
         source_code_file_name = sys.argv[1]
     except:
-        print 'using default test file'
-        source_code_file_name = './sample_Code/testcase-3-in-hex.txt'
+        source_code_file_name = 'human-code.txt'
+        # source_code_file_name = 'human-code-2.txt'
 
     code_file = file(source_code_file_name, 'r')
-    initial_values_file = file('./initial_values.txt', 'r')
+    initial_values_file = file('./initial_values_matrix.txt', 'r')
+    # initial_values_file = file('./initial_values_fibo.txt', 'r')
     processor = Processor(code_file, initial_values_file)
     processor.run()
 
